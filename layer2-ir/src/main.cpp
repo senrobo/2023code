@@ -1,14 +1,37 @@
-#include "Ardiuno.h"
+#include <Arduino.h>
 
-int tsopCounter = 0
+#define ARRAYSHIFTDOWN(a, lower, upper)          \
+  {                                              \
+    if (upper == (sizeof(a) / sizeof(a[0])) - 1) \
+    {                                            \
+      for (int q = upper - 1; q >= lower; q--)   \
+      {                                          \
+        *(a + q + 1) = *(a + q);                 \
+      }                                          \
+    }                                            \
+    else                                         \
+    {                                            \
+      for (int q = upper; q >= lower; q--)       \
+      {                                          \
+        *(a + q + 1) = *(a + q);                 \
+      }                                          \
+    }                                            \
+  }
 
-    int irVal[24] = [0];
-int tempVal[24] = [0];
-int irTolerance = 5;
-int irBottomLine = 10;
-int IR_LOOP = 10;
-int irAngle = 15;
-bool ballNotFound = true;
+bool ball = false;
+int angle = 0;
+int strength = 0;
+int tsopCounter = 0;
+int values[24] = {0};
+int indexes[24] = {0};
+int tempVal[24] = {0};
+int sortedValues[24] = {0};
+double scaledSin[24] = {0};
+double scaledCos[24] = {0};
+
+double degreesToRadians(double degrees);
+double radiansToDegrees(double radians);
+
 void setup()
 {
   Serial1.begin(115200); // Debug
@@ -38,83 +61,116 @@ void setup()
   pinMode(PA7, INPUT);
   pinMode(PA6, INPUT);
 
-  lastUp = micros();
+  double temp_angle;
+
+  for (int i = 0; i < 24; i++)
+  {
+    temp_angle = degreesToRadians(i * 15);
+    scaledCos[i] = cos(temp_angle);
+    scaledSin[i] = sin(temp_angle);
+  }
 }
 
-float mod(float x, float y)
+int mod(int x, int m);
+
+void irUpdate()
 {
-  x = fmod(x, y);
-  return x < 0 ? x + y : x;
+  tempVal[0] += digitalRead(PA5) ^ 1;
+  tempVal[1] += digitalRead(PA4) ^ 1;
+  tempVal[2] += digitalRead(PA1) ^ 1;
+  tempVal[3] += digitalRead(PA0) ^ 1;
+  tempVal[4] += digitalRead(PC15) ^ 1;
+  tempVal[5] += digitalRead(PC14) ^ 1;
+  tempVal[6] += digitalRead(PB9) ^ 1;
+  tempVal[7] += digitalRead(PB8) ^ 1;
+  tempVal[8] += digitalRead(PB7) ^ 1;
+  tempVal[9] += digitalRead(PB6) ^ 1;
+  tempVal[10] += digitalRead(PB5) ^ 1;
+  tempVal[11] += digitalRead(PB4) ^ 1;
+  tempVal[12] += digitalRead(PB3) ^ 1;
+  tempVal[13] += digitalRead(PA15) ^ 1;
+  tempVal[14] += digitalRead(PB14) ^ 1;
+  tempVal[15] += digitalRead(PB13) ^ 1;
+  tempVal[16] += digitalRead(PB12) ^ 1;
+  tempVal[17] += digitalRead(PB11) ^ 1;
+  tempVal[18] += digitalRead(PB10) ^ 1;
+  tempVal[19] += digitalRead(PB2) ^ 1;
+  tempVal[20] += digitalRead(PB1) ^ 1;
+  tempVal[21] += digitalRead(PB0) ^ 1;
+  tempVal[22] += digitalRead(PA7) ^ 1;
+  tempVal[23] += digitalRead(PA6) ^ 1;
+
+  tsopCounter++;
 }
 
-irVal[0] = digitalRead(PA5);
-irVal[1] = digitalRead(PA4);
-irVal[2] = digitalRead(PA1);
-irVal[3] = digitalRead(PA0);
-irVal[4] = digitalRead(PC15);
-irVal[5] = digitalRead(PC14);
-irVal[6] = digitalRead(PB9);
-irVal[7] = digitalRead(PB8);
-irVal[8] = digitalRead(PB7);
-irVal[9] = digitalRead(PB6);
-irVal[10] = digitalRead(PB5);
-irVal[11] = digitalRead(PB4);
-irVal[12] = digitalRead(PB3);
-irVal[13] = digitalRead(PA15);
-irVal[14] = digitalRead(PB14);
-irVal[15] = digitalRead(PB13);
-irVal[16] = digitalRead(PB12);
-irVal[17] = digitalRead(PB11);
-irVal[18] = digitalRead(PB10);
-irVal[19] = digitalRead(PB2);
-irVal[20] = digitalRead(PB1);
-irVal[21] = digitalRead(PB0);
-irVal[22] = digitalRead(PA7);
-irVal[23] = digitalRead(PA6);
-
-void getIRVals()
+void finishRead()
 {
-  for (int i = 0; i < IR_LOOP; i++)
+  for (int i = 0; i < 24; i++)
+  {
+    values[i] = 100 * (double)tempVal[i] / (double)tsopCounter;
+    tempVal[i] = 0;
+    sortedValues[i] = 0;
+    indexes[i] = 0;
+  }
+  tsopCounter = 0;
+  sortValues();
+  calculateAngleStrength(5);
+}
+
+void sortValues()
+{
+  for (int i = 0; i < 24; i++)
   {
     for (int j = 0; j < 24; j++)
     {
-      tempVal[j] += digitalRead(j);
+      if (values[i] > sortedValues[j])
+      {
+        if (j <= i)
+        {
+          ARRAYSHIFTDOWN(sortedValues, j, i);
+          ARRAYSHIFTDOWN(indexes, j, i);
+        }
+        sortedValues[j] = values[i];
+        indexes[j] = i;
+        break;
+      }
     }
   }
 }
 
-void processIR()
+void calculateAngleStrength(int n)
 {
-  // Bascially Loop through the IR List value and find the highest value and once the highest value is check for the next few values to see if they are about the same value based on a creatin + - range of 10% of the highest value
-  for (int i = 0; i < 24; i++ && ballNotFound)
+  int x = 0;
+  int y = 0;
+
+  for (int i = 0; i < n; i++)
   {
-    if (tempVal[i] > irBottomLine)
-    {
-      // check the next 2 sensors in the array to see if they fall within the +- range of the highest value of irTolerance and to prevent false positive or weird sensors
-
-      if (tempVal[i + 1] > tempVal[i] - irTolerance && tempVal[i + 1] < tempVal[i] + irTolerance)
-      {
-        if (tempVal[i + 2] > tempVal[i] - irTolerance && tempVal[i + 2] < tempVal[i] + irTolerance])
-        {
-          ballNotFound = false;
-          // calculate the angle of the ball
-          float angle = tempVal[i] * irAngle;
-        }
-        else
-        {
-
-          tsopCounter++
-        }
-      }
-    }
-    else
-    {
-      tsopCounter++;
-    }
+    x += scaledCos[indexes[i]] * sortedValues[i];
+    y += scaledSin[indexes[i]] * sortedValues[i];
   }
 
-  void loop()
+  if (x == 0 && y == 0)
   {
-    // read IR
-    updateIROnce();
+    ball = false;
   }
+  else
+  {
+    angle = mod(radiansToDegrees(atan2(y, x)), 360);
+    ball = true;
+  }
+  strength = sqrt(x * x + y * y);
+}
+
+void sendDataToTeensy()
+{
+  Serial2.write((byte)ball);
+  Serial2.write((byte)angle);
+  Serial2.write((byte)strength);
+}
+
+void loop()
+{
+  irUpdate();
+  finishRead();
+  sendDataToTeensy();
+}
