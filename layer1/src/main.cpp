@@ -86,7 +86,6 @@ void autoCalibrateLightSensors()
 
 void processLightData()
 {
-  // Ideally it should be 2 values thats on the line since the world is not perfect we shall compare the values of the sensors with the 2 greatest values so use a for loop and then compare the values
   if (outSensors != 0)
   {
     for (int i = 0; i < outSensors; i++)
