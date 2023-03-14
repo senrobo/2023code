@@ -13,7 +13,7 @@
 #define DRIBBLER_PWM 19
 #define BUILTIN_LED 13
 // Serial Definitions
-#define COMPASS_SERIAL Serial
+#define DEBUG Serial
 #define IR_SERIAL Serial2
 #define CAMERA_SERIAL Serial3
 #define LAYER1_SERIAL Serial4

@@ -3,7 +3,7 @@
 void setup()
 {
   // Serial Defintions
-  COMPASS_SERIAL.begin(115200);
+  DEBUG.begin(115200);
   IR_SERIAL.begin(115200);
   CAMERA_SERIAL.begin(115200);
   LAYER1_SERIAL.begin(115200);
@@ -30,27 +30,11 @@ void setup()
   pinMode(DRIBBLER_PWM, OUTPUT);
 }
 
-void readLightData() {}
-void processLightData() {}
-void readCompassData() {}
-void readUltraData() {}
-void readCameraData() {}
-void readIRData() {}
-void findBall() {}
-void chaseBall() {}
-void chaseGoal() {}
-
 void loop()
 {
-  findBall();
-  // if ball not found within certain duration, go to center of the field
-  if (ballFound)
+  // DEBUG.println(IR_SERIAL.available());
+  if (IR_SERIAL.available() > 0)
   {
-    // Move to ball
-    chaseBall();
-    if (ballCaptured)
-    {
-      chaseGoal();
-    }
+    DEBUG.print(char(IR_SERIAL.read());
   }
 }

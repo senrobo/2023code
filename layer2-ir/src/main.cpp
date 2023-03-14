@@ -1,9 +1,26 @@
 #include "main.h"
 
+double radiansToDegrees(double radians)
+{
+  return radians * 180 / PI;
+}
+
+double degreesToRadians(double degrees)
+{
+  return degrees * PI / 180;
+}
+
+int mod(int x, int m)
+{
+  return (x % m + m) % m;
+}
+
 void setup()
 {
-  Serial1.begin(115200); // Debug
-  Serial2.begin(115200); // Teensy
+  Serial2.begin(115200);
+  pinMode(PB15, OUTPUT);
+  digitalWrite(PB15, HIGH);
+
   pinMode(PA5, INPUT);
   pinMode(PA4, INPUT);
   pinMode(PA1, INPUT);
@@ -79,8 +96,6 @@ void finishRead()
     indexes[i] = 0;
   }
   tsopCounter = 0;
-  sortValues();
-  calculateAngleStrength(5);
 }
 
 void sortValues()
@@ -117,26 +132,22 @@ void calculateAngleStrength(int n)
 
   if (x == 0 && y == 0)
   {
-    ball = false;
+    ball = 400;
   }
   else
   {
     angle = mod(radiansToDegrees(atan2(y, x)), 360);
-    ball = true;
   }
   strength = sqrt(x * x + y * y);
-}
-
-void sendDataToTeensy()
-{
-  Serial2.write((byte)ball);
-  Serial2.write((byte)angle);
-  Serial2.write((byte)strength);
 }
 
 void loop()
 {
   irUpdate();
   finishRead();
-  sendDataToTeensy();
+  sortValues();
+  calculateAngleStrength(5);
+  Serial2.println(angle);
+  delay(100);
+  // Serial2.write(1);
 }
