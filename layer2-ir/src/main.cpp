@@ -54,9 +54,11 @@ void setup()
     scaledCos[i] = cos(temp_angle);
     scaledSin[i] = sin(temp_angle);
   }
+
+  unsigned long lastUp = micros();
 }
 
-void irUpdate()
+void irUpdateOnce()
 {
   tempVal[0] += digitalRead(PA5) ^ 1;
   tempVal[1] += digitalRead(PA4) ^ 1;
@@ -143,11 +145,15 @@ void calculateAngleStrength(int n)
 
 void loop()
 {
-  irUpdate();
-  finishRead();
-  sortValues();
-  calculateAngleStrength(5);
+  irUpdateOnce();
+  if (micros() - lastUp > 3333)
+  {
+    finishRead();
+    sortValues();
+    calculateAngleStrength(3);
+  }
+  lastUp = micros();
   Serial2.println(angle);
-  delay(100);
+  // delay(100);
   // Serial2.write(1);
 }

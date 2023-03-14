@@ -32,6 +32,8 @@ double scaledCos[24] = {0};
 double degreesToRadians(double degrees);
 double radiansToDegrees(double radians);
 
+unsigned long lastUp;
+
 int mod(int x, int m);
 
 // Pin Definitions
@@ -61,5 +63,3 @@ int mod(int x, int m);
 #define IRTwentyTwo PB0;
 #define IRTwentyThree PA7;
 #define IRTwentyFour PA6;
-
-

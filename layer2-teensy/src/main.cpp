@@ -35,6 +35,6 @@ void loop()
   // DEBUG.println(IR_SERIAL.available());
   if (IR_SERIAL.available() > 0)
   {
-    DEBUG.print(char(IR_SERIAL.read());
+    DEBUG.print(char(IR_SERIAL.read()));
   }
 }
