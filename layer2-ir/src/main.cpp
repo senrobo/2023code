@@ -135,7 +135,7 @@ void calculateAngleStrength(int n)
 
   if (x == 0 && y == 0)
   {
-    ball = 400;
+    angle = 400;
   }
   else
   {
