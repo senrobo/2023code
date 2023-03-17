@@ -1,3 +1,4 @@
+//TODO Process Strength here and tune it
 #include "main.h"
 
 double radiansToDegrees(double radians)
