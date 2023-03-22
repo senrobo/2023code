@@ -5,8 +5,8 @@
 // Pin Definitions
 #define LED PA15
 
-#define DebugSerial Serial1
-#define TeenySerial Serial2
+
+#define TeensySerial Serial2
 
 #define ultraSensorOneTrigger PB1
 #define ultraSensorOneEcho PB0

@@ -14,6 +14,7 @@
 #define BUILTIN_LED 13
 // Serial Definitions
 #define DEBUG Serial
+#define COMPASS_SERIAL Serial1
 #define IR_SERIAL Serial2
 #define CAMERA_SERIAL Serial3
 #define LAYER1_SERIAL Serial4

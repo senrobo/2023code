@@ -154,7 +154,5 @@ void loop()
     calculateAngleStrength(3);
   }
   lastUp = micros();
-  Serial2.println(angle);
-  // delay(100);
-  // Serial2.write(1);
+  Serial2.println(angle);\
 }

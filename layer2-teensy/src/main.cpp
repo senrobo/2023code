@@ -4,6 +4,7 @@ void setup()
 {
   // Serial Defintions
   DEBUG.begin(115200);
+  COMPASS_SERIAL.begin(115200);
   IR_SERIAL.begin(115200);
   CAMERA_SERIAL.begin(115200);
   LAYER1_SERIAL.begin(115200);
@@ -33,8 +34,10 @@ void setup()
 void loop()
 {
   // DEBUG.println(IR_SERIAL.available());
-  if (IR_SERIAL.available() > 0)
+  if (ULTRA_SERIAL.available() > 0)
   {
-    DEBUG.print(char(IR_SERIAL.read()));
+    DEBUG.println(ULTRA_SERIAL.read());
+    DEBUG.println(COMPASS_SERIAL.read());
+    delay(100);
   }
 }
