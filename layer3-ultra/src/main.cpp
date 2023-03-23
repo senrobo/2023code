@@ -10,5 +10,6 @@ void setup()
 void loop()
 {
   // put your main code here, to run repeatedly:
-  TeensySerial.write(2);
+  sensorDistance[0] = sonar[0].ping_cm();
+  TeensySerial.write(sensorDistance[0]);
 }

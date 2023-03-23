@@ -37,7 +37,6 @@ void loop()
   if (ULTRA_SERIAL.available() > 0)
   {
     DEBUG.println(ULTRA_SERIAL.read());
-    DEBUG.println(COMPASS_SERIAL.read());
     delay(100);
   }
 }

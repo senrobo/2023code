@@ -5,7 +5,6 @@
 // Pin Definitions
 #define LED PA15
 
-
 #define TeensySerial Serial2
 
 #define ultraSensorOneTrigger PB1
@@ -19,7 +18,7 @@
 
 // Global Variables
 bool newData = false;
-int maxDist = 200;
+int maxDist = 400;
 int sensorDistance[4];
 
 NewPing sonar[4] = {
