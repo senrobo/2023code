@@ -16,13 +16,4 @@
 #define ultraSensorFourTrigger PB5
 #define ultraSensorFourEcho PB6
 
-// Global Variables
-bool newData = false;
-int maxDist = 400;
-int sensorDistance[4];
 
-NewPing sonar[4] = {
-    NewPing(ultraSensorOneTrigger, ultraSensorOneEcho, maxDist),
-    NewPing(ultraSensorTwoTrigger, ultraSensorTwoEcho, maxDist),
-    NewPing(ultraSensorThreeTrigger, ultraSensorThreeEcho, maxDist),
-    NewPing(ultraSensorFourTrigger, ultraSensorFourEcho, maxDist)};

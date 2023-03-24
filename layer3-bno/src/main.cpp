@@ -1,4 +1,7 @@
 #include "main.h"
+
+Adafruit_BNO055 bno = Adafruit_BNO055(55);
+
 void setup()
 {
   // put your setup code here, to run once:

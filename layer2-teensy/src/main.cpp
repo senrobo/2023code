@@ -36,7 +36,6 @@ void loop()
   // DEBUG.println(IR_SERIAL.available());
   if (ULTRA_SERIAL.available() > 0)
   {
-    DEBUG.println(ULTRA_SERIAL.read());
-    delay(100);
+    DEBUG.print(ULTRA_SERIAL.read());
   }
 }
