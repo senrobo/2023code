@@ -1,4 +1,4 @@
-//TODO Process Strength here and tune it
+// TODO Process Strength here and tune it
 #include "main.h"
 
 double radiansToDegrees(double radians)
@@ -151,8 +151,9 @@ void loop()
   {
     finishRead();
     sortValues();
-    calculateAngleStrength(3);
+    calculateAngleStrength(5);
   }
   lastUp = micros();
-  Serial2.println(angle);\
+
+  Serial2.print(angle);
 }

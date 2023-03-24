@@ -34,8 +34,8 @@ void setup()
 void loop()
 {
   // DEBUG.println(IR_SERIAL.available());
-  if (ULTRA_SERIAL.available() > 0)
+  if (IR_SERIAL.available() > 0)
   {
-    DEBUG.print(ULTRA_SERIAL.read());
+    DEBUG.println(IR_SERIAL.read());
   }
 }
