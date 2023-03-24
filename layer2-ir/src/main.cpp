@@ -155,5 +155,5 @@ void loop()
   }
   lastUp = micros();
 
-  Serial2.print(angle);
+  Serial2.write(angle);
 }
