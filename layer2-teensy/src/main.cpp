@@ -31,11 +31,17 @@ void setup()
   pinMode(DRIBBLER_PWM, OUTPUT);
 }
 
+// CANNOT GO BELOW 40
+
 void loop()
 {
   // DEBUG.println(IR_SERIAL.available());
-  if (IR_SERIAL.available() > 0)
-  {
-    DEBUG.write(IR_SERIAL.read());
-  }
+  digitalWrite(FL_DIR, LOW);
+  analogWrite(FL_PWM, 40);
+  digitalWrite(FR_DIR, HIGH);
+  analogWrite(FR_PWM, 40);
+  digitalWrite(BR_DIR, HIGH);
+  analogWrite(BR_PWM, 40);
+  digitalWrite(BL_DIR, LOW);
+  analogWrite(BL_PWM, 40);
 }
