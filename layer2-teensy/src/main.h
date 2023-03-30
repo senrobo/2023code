@@ -25,6 +25,7 @@
 #define LAYER1_SERIAL Serial4
 
 // Global Variables
+int ballAngle, ballStrength;
 bool ballCaptured, ballFound, kick = false;
 
 // Movement Config
@@ -40,16 +41,7 @@ bool ballCaptured, ballFound, kick = false;
 #define BALL_MOVEMENT_A 1e-4F
 #define BALL_MOVEMENT_B 10.0F
 
-// #define STOP_WITHIN_LINE_BALL_RANGE  40
-// #define STOP_WITHIN_LINE_STRENGTH    0.2
-// #define BEGIN_ENTERING_LINE_STRENGTH 0.5
-// #define ENTER_LINE_SPEED_MULTIPLIER  150.0
-// #define ENTER_LINE_MAX_SPEED         200
-
-// PID Constants
-#define KP_ROBOT_ANGLE 3e-3F
-#define KI_ROBOT_ANGLE 1e-9F
-#define KD_ROBOT_ANGLE 1e2F
-#define MIN_DT_ROBOT_ANGLE 5000
+// IR Serial Config of creating a buffer for the IR Serial sizeof(byte) is the sync byte which is around 9 Bytes
+#define IR_SERIAL_BUFFER_SIZE sizeof(byte) + sizeof(int) + sizeof(int)
 
 #endif
