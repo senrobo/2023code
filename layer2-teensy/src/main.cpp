@@ -78,40 +78,29 @@ void setup()
 
 void loop()
 {
+  // // DO NOT REMOVE THIS IS FOR YOUR SANITY CHECK
+  // if (IR_SERIAL.available() > 0)
+  // {
+  //   DEBUG.print(char(IR_SERIAL.read()));
+  // }
 
-  if (IR_SERIAL.available() > 0)
-  {
-    DEBUG.print(char(IR_SERIAL.read()));
-  }
-
-  // DEBUG.println(IR_SERIAL.available());
-
-  // #define IR_SERIAL_BUFFER_SIZE sizeof(byte) + sizeof(int) + sizeof(int)
-
-  //   int ballAngle;
-  //   int ballStrength;
-
-  //   // Read 8 bytes from IR_SERIAL
-  //   while (IR_SERIAL.available() >= IR_SERIAL_BUFFER_SIZE)
+  // // Loop through the IR_SERIAL buffer to find the sync byte
+  // while (IR_SERIAL.available() >= IR_SERIAL_BUFFER_SIZE)
+  // {
+  //   if (IR_SERIAL.read() == SYNC_BYTE)
   //   {
-  //     if (IR_SERIAL.read() == SYNC_BYTE)
-  //     {
-  //       byte buf[IR_SERIAL_BUFFER_SIZE - 1];
-  //       IR_SERIAL.readBytes(buf, IR_SERIAL_BUFFER_SIZE - 1);
-  //       memcpy(&ballAngle, buf, sizeof(int));
-  //       memcpy(&ballStrength, buf + sizeof(int), sizeof(int));
+  //     // First we subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
+  //     byte buf[IR_SERIAL_BUFFER_SIZE - 1];
+  //     IR_SERIAL.readBytes(buf, IR_SERIAL_BUFFER_SIZE - 1);
 
-  //       // Print the buffer to serial with printf
-  //       for (int i = 0; i < IR_SERIAL_BUFFER_SIZE - 1; ++i)
-  //         DEBUG.printf("%02x", buf[i]);
-  //       Serial.print(" ");
-  //       // DEBUG.println(IR_SERIAL_BUFFER_SIZE);
-  //       // Serial.print(" ");
+  //     // Copy the last 8 buffer bytes into the ballAngle and ballStrength variables
+  //     memcpy(&ballAngle, buf, sizeof(int));
+  //     memcpy(&ballStrength, buf + sizeof(int), sizeof(int));
 
-  //       // DEBUG.print("Angle: ");
-  //       // DEBUG.println(ballAngle);
-  //       DEBUG.print(" Strength: ");
-  //       DEBUG.println(ballStrength);
-  //     }
+  //     // // Print the buffer to serial with printf
+  //     for (int i = 1; i < 9; ++i)
+  //       Serial2.printf("%02x", buf[i]);
+  //     Serial.print("\n ");
   //   }
+  // }
 }
