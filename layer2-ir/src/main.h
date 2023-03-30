@@ -36,6 +36,8 @@ unsigned long lastUp;
 
 int mod(int x, int m);
 
+#define SYNC_BYTE 0b11010110
+
 // Pin Definitions
 #define LED PB15;
 
