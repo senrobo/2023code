@@ -41,7 +41,4 @@ bool ballCaptured, ballFound, kick = false;
 #define BALL_MOVEMENT_A 1e-4F
 #define BALL_MOVEMENT_B 10.0F
 
-// IR Serial Config of creating a buffer for the IR Serial sizeof(byte) is the sync byte which is around 9 Bytes
-#define IR_SERIAL_BUFFER_SIZE sizeof(byte) + sizeof(int) + sizeof(int)
-
 #endif
