@@ -74,33 +74,10 @@ void setup()
   pinMode(DRIBBLER_PWM, OUTPUT);
 }
 
-// CANNOT GO BELOW 50
-
 void loop()
 {
-  // // DO NOT REMOVE THIS IS FOR YOUR SANITY CHECK
-  // if (IR_SERIAL.available() > 0)
-  // {
-  //   DEBUG.print(char(IR_SERIAL.read()));
-  // }
+  // Loop through the IR_SERIAL buffer to find the sync byte
+  
+  
 
-  // // Loop through the IR_SERIAL buffer to find the sync byte
-  // while (IR_SERIAL.available() >= IR_SERIAL_BUFFER_SIZE)
-  // {
-  //   if (IR_SERIAL.read() == SYNC_BYTE)
-  //   {
-  //     // First we subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
-  //     byte buf[IR_SERIAL_BUFFER_SIZE - 1];
-  //     IR_SERIAL.readBytes(buf, IR_SERIAL_BUFFER_SIZE - 1);
-
-  //     // Copy the last 8 buffer bytes into the ballAngle and ballStrength variables
-  //     memcpy(&ballAngle, buf, sizeof(int));
-  //     memcpy(&ballStrength, buf + sizeof(int), sizeof(int));
-
-  //     // // Print the buffer to serial with printf
-  //     for (int i = 1; i < 9; ++i)
-  //       Serial2.printf("%02x", buf[i]);
-  //     Serial.print("\n ");
-  //   }
-  // }
 }
