@@ -36,7 +36,7 @@ bool ballCaptured, ballFound, kick = false;
 // Should ideally be <=1.0F to preserve resolution
 #define ANGULAR_VELOCITY_MULTIPLIER 0.25F
 #define DRIVE_STALL_SPEED (int16_t)50
-#define DRIVE_MAX_SPEED (int16_t)200
+#define DRIVE_MAX_SPEED (int16_t)100
 
 #define BALL_MOVEMENT_A 1e-4F
 #define BALL_MOVEMENT_B 10.0F

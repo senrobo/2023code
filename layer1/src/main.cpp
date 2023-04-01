@@ -5,8 +5,7 @@
 void setup()
 {
   // put your setup code here, to run once:
-  Serial1.begin(115200); // Debugger
-  Serial2.begin(115200); // Teensy
+  TeensySerial.begin(115200); // Teensy
 
   pinMode(led, OUTPUT);
   digitalWrite(led, HIGH);
@@ -78,10 +77,6 @@ void updateSensors()
     digitalWrite(m2s3, muxChannel[lightCnt][3]);
     readTimer = micros();
   }
-}
-
-void autoCalibrateLightSensors()
-{
 }
 
 void processLightData()
