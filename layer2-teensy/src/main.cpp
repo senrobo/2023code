@@ -31,26 +31,29 @@ void setup()
 
 void loop()
 {
-  // if (IR_SERIAL.available() > 0)
-  // {
-  //   DEBUG.print(char(IR_SERIAL.read()));
-  // }
-  // Loop through the IR_SERIAL buffer to find the sync byte
-  while (IR_SERIAL.available() >= 9U)
+  if (LAYER1_SERIAL.available() > 0)
   {
-    if (IR_SERIAL.read() == SYNC_BYTE)
-    {
-      // First we subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
-      byte buf[8U];
-      IR_SERIAL.readBytes(buf, 8U);
-
-      // Copy the last 8 buffer bytes into the ballAngle and ballStrength variables
-      memcpy(&ballAngle, buf, 4U);
-      memcpy(&ballStrength, buf + 4U, 4U);
-
-      // // Print the buffer to serial with printf
-      // for (int i = 0; i < 8; ++i)
-      //   DEBUG.printf("%02x", buf[i]);
-      // DEBUG.print("\n ");
-    }
+    DEBUG.print(char(LAYER1_SERIAL.read()));
   }
+  // Loop through the IR_SERIAL buffer to find the sync byte
+  // while (IR_SERIAL.available() >= 9U)
+  // {
+  //   if (IR_SERIAL.read() == SYNC_BYTE)
+  //   {
+  //     // First we subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
+  //     byte buf[8U];
+  //     IR_SERIAL.readBytes(buf, 8U);
+
+  //     // Copy the last 8 buffer bytes into the ballAngle and ballStrength variables
+  //     memcpy(&ballAngle, buf, 4U);
+  //     memcpy(&ballStrength, buf + 4U, 4U);
+
+  //     // // Print the buffer to serial with printf
+  //     // for (int i = 0; i < 8; ++i)
+  //     //   DEBUG.printf("%02x", buf[i]);
+  //     // DEBUG.print("\n ");
+  //   }
+  // }
+  // DEBUG.print("Ball Angle: ");
+  // DEBUG.println(ballAngle);
+}

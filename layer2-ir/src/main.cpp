@@ -153,9 +153,7 @@ void loop()
     calculateAngleAndStrength(5);
   }
   lastUp = micros();
-  // Serial2.println(angle);
-  // delay(100);
-  // Serial2.write(1);
+  Serial2.println(angle);
 
   // Create a buffer to send the data over serial and the size of the buffer is the total combined size of the angle stregnth and sync byte in BYTES
   byte buf[9U];
