@@ -2,6 +2,11 @@
 #define MAIN_H
 
 #include "Arduino.h"
+#include "Adafruit_BNO055.h"
+#include "Adafruit_Sensor.h"
+#include "utility/imumaths.h"
+#include "Wire.h"
+#include "SPI.h"
 
 #define SYNC_BYTE 0b11010110
 

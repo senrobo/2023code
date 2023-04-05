@@ -16,8 +16,8 @@ struct ballData
 void drive()
 {
   // Convert polar to cartesian
-  const auto x = sinf((float)movement.angle * DEG_TO_RAD);
-  const auto y = cosf((float)movement.angle * DEG_TO_RAD);
+  const auto x = sinf((int)movement.angle * DEG_TO_RAD);
+  const auto y = cosf((int)movement.angle * DEG_TO_RAD);
 
   // Compute the speeds of the individual motors
   const auto transformSpeed = [](float speed, float angularComponent)
@@ -68,12 +68,6 @@ void setup()
   pinMode(BR_DIR, OUTPUT);
   pinMode(BL_PWM, OUTPUT);
   pinMode(BL_DIR, OUTPUT);
-
-  // Ball Detection
-  pinMode(BALL_DETECT, INPUT);
-
-  // Dribbler PWM
-  pinMode(DRIBBLER_PWM, OUTPUT);
 }
 
 void loop()
