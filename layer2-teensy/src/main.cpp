@@ -2,8 +2,8 @@
 
 struct Movement
 {
-  int16_t angle = 0;           // -179(.)99º to +180(.)00º
-  int16_t speed = 0;           // ±50 to ±100
+  int16_t angle = 0; // -179(.)99º to +180(.)00º
+  int16_t speed = 50;
   int16_t angularVelocity = 0; // ~±140 to ~±1024
 } movement;
 
