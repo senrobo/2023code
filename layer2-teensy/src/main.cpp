@@ -16,8 +16,8 @@ struct ballData
 void drive()
 {
   // Convert polar to cartesian
-  const auto x = sinf((float)movement.angle / 100 * DEG_TO_RAD);
-  const auto y = cosf((float)movement.angle / 100 * DEG_TO_RAD);
+  const auto x = sinf((float)movement.angle * DEG_TO_RAD);
+  const auto y = cosf((float)movement.angle * DEG_TO_RAD);
 
   // Compute the speeds of the individual motors
   const auto transformSpeed = [](float speed, float angularComponent)
