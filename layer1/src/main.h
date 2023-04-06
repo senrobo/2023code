@@ -20,9 +20,6 @@
 #define sol PB10
 #define led PC13
 
-// microseconds between each channel switch
-#define MUX_DELAY 70
-
 // Initilalize Variables
 float lineAngle = 0;
 float lineTrackAngle;

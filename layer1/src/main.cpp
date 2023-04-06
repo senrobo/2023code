@@ -34,32 +34,19 @@ void setup()
 }
 
 // Light Stuff
+
 void updateSensors()
 {
-  if (micros() - readTimer >= MUX_DELAY)
+  if (micros() - readTimer >= 100)
   {
     int idx = lightCnt;
-    lightVals[idx] = analogRead(mux2);
-
-    if (lightVals[idx] > fixedThreshFirstBot[idx])
-    {
-      lineDetected[outSensors] = idx;
-      outSensors++;
-    }
-
-    idx = lightCnt + 15;
-
     lightVals[idx] = analogRead(mux1);
-    if (lightVals[idx] > fixedThreshFirstBot[idx])
-    {
-      lineDetected[outSensors] = idx;
-      outSensors++;
-    }
 
     lightCnt++;
     lightCnt %= 16;
-
-    // Ping via using nested lists [lightCnt] to access which mux "configuration" and [0-3] to access which pin to set [HIGH/LOW
+    
+    idx = lightCnt + 16;
+    lightVals[idx] = analogRead(mux2);
     digitalWrite(m1s0, muxChannel[lightCnt][0]);
     digitalWrite(m1s1, muxChannel[lightCnt][1]);
     digitalWrite(m1s2, muxChannel[lightCnt][2]);
@@ -68,9 +55,48 @@ void updateSensors()
     digitalWrite(m2s1, muxChannel[lightCnt][1]);
     digitalWrite(m2s2, muxChannel[lightCnt][2]);
     digitalWrite(m2s3, muxChannel[lightCnt][3]);
+
     readTimer = micros();
   }
 }
+
+// void updateSensors()
+// {
+//   if (micros() - readTimer >= MUX_DELAY)
+//   {
+//     int idx = lightCnt;
+//     lightVals[idx] = analogRead(mux1);
+
+//     if (lightVals[idx] > fixedThreshFirstBot[idx])
+//     {
+//       lineDetected[outSensors] = idx;
+//       outSensors++;
+//     }
+
+//     idx = lightCnt + 15;
+
+//     lightVals[idx] = analogRead(mux2);
+//     if (lightVals[idx] > fixedThreshFirstBot[idx])
+//     {
+//       lineDetected[outSensors] = idx;
+//       outSensors++;
+//     }
+
+//     lightCnt++;
+//     lightCnt %= 16;
+
+//     // Ping via using nested lists [lightCnt] to access which mux "configuration" and [0-3] to access which pin to set [HIGH/LOW
+//     digitalWrite(m1s0, muxChannel[lightCnt][0]);
+//     digitalWrite(m1s1, muxChannel[lightCnt][1]);
+//     digitalWrite(m1s2, muxChannel[lightCnt][2]);
+//     digitalWrite(m1s3, muxChannel[lightCnt][3]);
+//     digitalWrite(m2s0, muxChannel[lightCnt][0]);
+//     digitalWrite(m2s1, muxChannel[lightCnt][1]);
+//     digitalWrite(m2s2, muxChannel[lightCnt][2]);
+//     digitalWrite(m2s3, muxChannel[lightCnt][3]);
+//     readTimer = micros();
+//   }
+// }
 
 // void processLightData()
 // {
@@ -104,12 +130,11 @@ void loop()
 {
   // put your main code here, to run repeatedly:
   updateSensors();
-  TeensySerial.print("Light Values: ");
   for (int i = 0; i < 30; i++)
   {
+
     TeensySerial.print(lightVals[i]);
-    TeensySerial.print(" ");
+    TeensySerial.print(" | ");
   }
   TeensySerial.println();
-  // processLightData();
 }
