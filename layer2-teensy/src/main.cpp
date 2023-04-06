@@ -1,5 +1,11 @@
 #include "main.h"
 
+Adafruit_BNO055 bno = Adafruit_BNO055(55);
+
+int8_t temp = bno.getTemp();
+
+#define BNO055_SAMPLERATE_DELAY_MS (100)
+
 struct Movement
 {
   int16_t angle = 0; // -179(.)99º to +180(.)00º
@@ -12,6 +18,49 @@ struct ballData
   int angle = 0;
   int strength = 0;
 } balldata;
+
+void printAllIMUData()
+{
+  sensors_event_t eul, gyr, lac, mag, acc, gra;
+  bno.getEvent(&eul, Adafruit_BNO055::VECTOR_EULER);
+  bno.getEvent(&gyr, Adafruit_BNO055::VECTOR_GYROSCOPE);
+  bno.getEvent(&acc, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+  bno.getEvent(&lac, Adafruit_BNO055::VECTOR_LINEARACCEL);
+  bno.getEvent(&gra, Adafruit_BNO055::VECTOR_GRAVITY);
+  bno.getEvent(&mag, Adafruit_BNO055::VECTOR_MAGNETOMETER);
+
+  // Get calibration states
+  uint8_t systemCalib, gyroCalib, accCalib, magCalib;
+  bno.getCalibration(&systemCalib, &gyroCalib, &accCalib, &magCalib);
+
+  // Print everything to serial
+  const auto printVector = [](const char *name, const sensors_vec_t &vector)
+  {
+    DEBUG.printf(
+        "%s: x = %4d.%02d y = %4d.%02d z = %4d.%02d\n", name,
+        (int16_t)vector.x, abs((int32_t)(vector.x * 100) % 100),
+        (int16_t)vector.y, abs((int32_t)(vector.y * 100) % 100),
+        (int16_t)vector.z, abs((int32_t)(vector.z * 100) % 100));
+  };
+  printVector("Euler Angle (º)            ", eul.orientation);
+  printVector("Angular Velocity (rad s⁻¹) ", gyr.gyro);
+  printVector("Acceleration (m s⁻²)       ", acc.acceleration);
+  printVector("Linear Acceleration (m s⁻²)", lac.acceleration);
+  printVector("Gravity (m s⁻²)            ", gra.acceleration);
+  printVector("Magnetic Field (μT)        ", mag.magnetic);
+
+  DEBUG.printf(
+      "Calibration: System = %d Gyroscope = %d Accelerometer = %d "
+      "Magnetometer = %d\n\n",
+      systemCalib, gyroCalib, accCalib, magCalib);
+}
+
+int16_t readRobotAngle()
+{
+  sensors_event_t eulerAngles;
+  bno.getEvent(&eulerAngles, Adafruit_BNO055::VECTOR_EULER);
+  DEBUG.println(eulerAngles.orientation.x);
+}
 
 void drive()
 {
@@ -55,6 +104,12 @@ void setup()
   CAMERA_SERIAL.begin(115200);
   LAYER1_SERIAL.begin(115200);
 
+  Wire.begin();
+  bno.begin();
+  delay(1000);
+  bno.setExtCrystalUse(false); // we do not have an external crystal
+  bno.setMode(OPERATION_MODE_IMUPLUS);
+
   // Built in LED
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, HIGH);
@@ -93,6 +148,14 @@ void getIRData()
   }
 }
 
+void getLightData()
+{
+  while (LAYER1_SERIAL.available() > 0)
+  {
+    DEBUG.print(char(LAYER1_SERIAL.read()));
+  }
+}
+
 void processDrive()
 {
   if (0 <= balldata.angle && balldata.angle <= 180)
@@ -107,18 +170,23 @@ void processDrive()
 }
 void loop()
 {
-  movement.speed = 100;
-  getIRData();
-  processDrive();
-  // if (IR_SERIAL.available() > 0)
-  // {
-  //   DEBUG.print(char(IR_SERIAL.read()));
-  // }
+  printAllIMUData();
 
-  drive();
-  DEBUG.print("Ball Angle: ");
-  DEBUG.print(movement.angle);
-  DEBUG.print(" | ");
-  DEBUG.print("Ball Strength: ");
-  DEBUG.println(balldata.strength);
+  // movement.speed = 100;
+  // getIRData();
+  // processDrive();
+  // // if (IR_SERIAL.available() > 0)
+  // // {
+  // //   DEBUG.print(char(IR_SERIAL.read()));
+  // // }
+
+  // drive();
+  // DEBUG.print("Ball Angle: ");
+  // DEBUG.print(movement.angle);
+  // DEBUG.print(" | ");
+  // DEBUG.print("Ball Strength: ");
+  // DEBUG.println(balldata.strength);
+  // getLightData();
+
+  delay(BNO055_SAMPLERATE_DELAY_MS);
 }

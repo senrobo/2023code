@@ -24,12 +24,12 @@
 #define BUILTIN_LED 13
 // Serial Definitions
 #define DEBUG Serial
-#define COMPASS_SERIAL Serial1
 #define IR_SERIAL Serial2
 #define CAMERA_SERIAL Serial3
 #define LAYER1_SERIAL Serial4
-
 // Global Variables
+int16_t bearingToAngle(float bearing);
+int16_t robotAngle = 0;
 int ballAngle, ballStrength;
 bool ballCaptured, ballFound, kick = false;
 float offsetAngle;
