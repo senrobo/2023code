@@ -170,7 +170,7 @@ void processDrive()
 }
 void loop()
 {
-  printAllIMUData();
+  // printAllIMUData();
 
   // movement.speed = 100;
   // getIRData();
@@ -186,7 +186,7 @@ void loop()
   // DEBUG.print(" | ");
   // DEBUG.print("Ball Strength: ");
   // DEBUG.println(balldata.strength);
-  // getLightData();
+  getLightData();
 
-  delay(BNO055_SAMPLERATE_DELAY_MS);
+  // delay(BNO055_SAMPLERATE_DELAY_MS);
 }
