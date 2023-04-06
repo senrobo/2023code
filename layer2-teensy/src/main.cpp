@@ -70,14 +70,8 @@ void setup()
   pinMode(BL_DIR, OUTPUT);
 }
 
-void loop()
+void getIRData()
 {
-  movement.speed = 50;
-
-  // if (IR_SERIAL.available() > 0)
-  // {
-  //   DEBUG.print(char(IR_SERIAL.read()));
-  // }
   // Loop through the IR_SERIAL buffer to find the sync byte
   while (IR_SERIAL.available() >= 9U)
   {
@@ -97,7 +91,30 @@ void loop()
       // DEBUG.print("\n ");
     }
   }
-  movement.angle = balldata.angle;
+}
+
+void processDrive()
+{
+  if (0 <= balldata.angle && balldata.angle <= 180)
+  {
+    offsetAngle = min(balldata.angle * BALL_MOVEMENT_A, 90);
+  }
+  else
+  {
+    offsetAngle = max((balldata.angle - 360) * BALL_MOVEMENT_A, -90);
+  }
+  movement.angle = balldata.angle + (offsetAngle * BALL_MOVEMENT_B);
+}
+void loop()
+{
+  movement.speed = 100;
+  getIRData();
+  processDrive();
+  // if (IR_SERIAL.available() > 0)
+  // {
+  //   DEBUG.print(char(IR_SERIAL.read()));
+  // }
+
   drive();
   DEBUG.print("Ball Angle: ");
   DEBUG.print(movement.angle);

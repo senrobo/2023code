@@ -32,6 +32,7 @@
 // Global Variables
 int ballAngle, ballStrength;
 bool ballCaptured, ballFound, kick = false;
+float offsetAngle;
 
 // Movement Config
 

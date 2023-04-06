@@ -18,8 +18,8 @@ int mod(int x, int m)
 void setup()
 {
   Serial2.begin(115200);
-  pinMode(PB15, OUTPUT);
-  digitalWrite(PB15, HIGH);
+  pinMode(PC13, OUTPUT);
+  digitalWrite(PC13, HIGH);
 
   pinMode(PA5, INPUT);
   pinMode(PA4, INPUT);
