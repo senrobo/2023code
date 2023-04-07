@@ -121,7 +121,7 @@ void sortValues()
   }
 }
 
-void calculateAngleAndStrength(int n)
+void calculateAngle(int n)
 {
   int x = 0;
   int y = 0;
@@ -140,7 +140,6 @@ void calculateAngleAndStrength(int n)
   {
     angle = mod(radiansToDegrees(atan2(y, x)), 360);
   }
-  strength = sortedValues[0];
 }
 
 void loop()
@@ -150,7 +149,7 @@ void loop()
   {
     finishRead();
     sortValues();
-    calculateAngleAndStrength(6);
+    calculateAngle(6);
   }
   lastUp = micros();
   // Serial2.print("Angle: ");
@@ -166,7 +165,6 @@ void loop()
 
   // Copy the angle and strength into the buffer
   memcpy(buf + 1U, &angle, sizeof(angle));
-  memcpy(buf + 1U + sizeof(angle), &strength, sizeof(strength));
 
   // Print the buffer to serial with printf
   Serial2.write(buf, sizeof(buf));

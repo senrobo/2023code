@@ -140,17 +140,16 @@ void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
 void getIRData()
 {
   // Loop through the IR_SERIAL buffer to find the sync byte
-  while (IR_SERIAL.available() >= 9U)
+  while (IR_SERIAL.available() >= 5U)
   {
     if (IR_SERIAL.read() == SYNC_BYTE)
     {
       // Subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
-      byte buf[8U];
-      IR_SERIAL.readBytes(buf, 8U);
+      byte buf[4U];
+      IR_SERIAL.readBytes(buf, 4U);
 
       // Copy the last 8 buffer bytes into the ballAngle and ballStrength variables
       memcpy(&balldata.angle, buf, 4U);
-      memcpy(&balldata.strength, buf + 4U, 4U);
 
       // // Print the buffer to serial with printf
       // for (int i = 0; i < 8; ++i)
@@ -168,17 +167,30 @@ void getLightData()
   }
 }
 
-void processDrive()
+void faceForwards()
 {
-  if (0 <= balldata.angle && balldata.angle <= 180)
+  if (correction < 0)
   {
-    offsetAngle = min(balldata.angle * BALL_MOVEMENT_A, 90);
+    analogWrite(FL_PWM, 40 - correction);
+    analogWrite(FR_PWM, 40 - correction);
+    analogWrite(BL_PWM, 40 - correction);
+    analogWrite(BR_PWM, 40 - correction);
+    digitalWrite(FL_DIR, HIGH);
+    digitalWrite(FR_DIR, HIGH);
+    digitalWrite(BL_DIR, HIGH);
+    digitalWrite(BR_DIR, HIGH);
   }
-  else
+  else if (correction > 0)
   {
-    offsetAngle = max((balldata.angle - 360) * BALL_MOVEMENT_A, -90);
+    analogWrite(FL_PWM, 40 + correction);
+    analogWrite(FR_PWM, 40 + correction);
+    analogWrite(BL_PWM, 40 + correction);
+    analogWrite(BR_PWM, 40 + correction);
+    digitalWrite(FL_DIR, LOW);
+    digitalWrite(FR_DIR, LOW);
+    digitalWrite(BL_DIR, LOW);
+    digitalWrite(BR_DIR, LOW);
   }
-  movement.angle = balldata.angle + (offsetAngle * BALL_MOVEMENT_B);
 }
 
 void setup()
@@ -245,44 +257,22 @@ void setup()
 void loop()
 {
   // read all sensors
-  // getIRData();
   // getLightData();
   // check inbounds
   // if light.In false
   // moveout
+  getIRData();
+
+  DEBUG.println(balldata.strength);
   // check if ball exist ? move to ball : center to field via camera
   // if ball.stregnth != 400
   // movement.angle = ball.angle
   // if ball caught analogread
   // keep straight
-  calculateRobotAngle();
-  if (correction < 0)
-  {
-    analogWrite(FL_PWM, 40 - correction);
-    analogWrite(FR_PWM, 40 - correction);
-    analogWrite(BL_PWM, 40 - correction);
-    analogWrite(BR_PWM, 40 - correction);
-    digitalWrite(FL_DIR, HIGH);
-    digitalWrite(FR_DIR, HIGH);
-    digitalWrite(BL_DIR, HIGH);
-    digitalWrite(BR_DIR, HIGH);
-  }
-  else if (correction > 0)
-  {
-    analogWrite(FL_PWM, 40 + correction);
-    analogWrite(FR_PWM, 40 + correction);
-    analogWrite(BL_PWM, 40 + correction);
-    analogWrite(BR_PWM, 40 + correction);
-    digitalWrite(FL_DIR, LOW);
-    digitalWrite(FR_DIR, LOW);
-    digitalWrite(BL_DIR, LOW);
-    digitalWrite(BR_DIR, LOW);
-  }
+  // calculateRobotAngle();
+  // faceForwards();
   // chaseGoal(); // while ball still caputred chase goal else search ball
 
-  // processDrive();
-
-  // drive();
   // DEBUG.print("Ball Angle: ");
   // DEBUG.print(movement.angle);
   // DEBUG.print(" | ");
