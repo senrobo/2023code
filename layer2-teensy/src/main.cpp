@@ -59,7 +59,6 @@ void printAllIMUData()
 
 void calculateRobotAngle()
 {
-
   sensors_event_t eulerAngles;
   bno.getEvent(&eulerAngles, Adafruit_BNO055::VECTOR_EULER);
   int robotBearing = round(eulerAngles.orientation.x);
@@ -67,7 +66,7 @@ void calculateRobotAngle()
   int error = -epoopoo;
   int correctionKP = error * IMUKP;
   int correctionKD = (error - lastError) * IMUKD;
-  ycorrection = correctionKP + correctionKD;
+  correction = correctionKP + correctionKD;
   lastError = error;
 }
 
@@ -252,7 +251,7 @@ void loop()
   // if light.In false
   // moveout
   // keep straight
-  // calculateRobotAngle();
+  calculateRobotAngle();
   // check if ball exist ? move to ball : center to field via camera
   // if ball.stregnth != 400
   // movement.angle = ball.angle
@@ -272,4 +271,33 @@ void loop()
   // readRobotAngle();
   // delay(BNO055_SAMPLERATE_DELAY_MS);
   DEBUG.println(correction);
+  if (correction < -5)
+  {
+    analogWrite(FL_PWM, 40);
+    analogWrite(FR_PWM, 40);
+    analogWrite(BL_PWM, 40);
+    analogWrite(BR_PWM, 40);
+    digitalWrite(FL_DIR, HIGH);
+    digitalWrite(FR_DIR, HIGH);
+    digitalWrite(BL_DIR, HIGH);
+    digitalWrite(BR_DIR, HIGH);
+  }
+  else if (correction > 5)
+  {
+    analogWrite(FL_PWM, 40);
+    analogWrite(FR_PWM, 40);
+    analogWrite(BL_PWM, 40);
+    analogWrite(BR_PWM, 40);
+    digitalWrite(FL_DIR, LOW);
+    digitalWrite(FR_DIR, LOW);
+    digitalWrite(BL_DIR, LOW);
+    digitalWrite(BR_DIR, LOW);
+  }
+  else
+  {
+    analogWrite(FL_PWM, 0);
+    analogWrite(FR_PWM, 0);
+    analogWrite(BL_PWM, 0);
+    analogWrite(BR_PWM, 0);
+  }
 }

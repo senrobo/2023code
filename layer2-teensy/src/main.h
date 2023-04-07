@@ -50,7 +50,7 @@ float offsetAngle;
 #define BALL_MOVEMENT_A 1e-4F
 #define BALL_MOVEMENT_B 10.0F
 
-#define IMUKP 1
-#define IMUKD 1
+#define IMUKP 0.4
+#define IMUKD 4
 
 #endif
