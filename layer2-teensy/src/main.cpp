@@ -250,13 +250,35 @@ void loop()
   // check inbounds
   // if light.In false
   // moveout
-  // keep straight
-  calculateRobotAngle();
   // check if ball exist ? move to ball : center to field via camera
   // if ball.stregnth != 400
   // movement.angle = ball.angle
   // if ball caught analogread
-  // chaseGoal();
+  // keep straight
+  calculateRobotAngle();
+  if (correction < 0)
+  {
+    analogWrite(FL_PWM, 40 - correction);
+    analogWrite(FR_PWM, 40 - correction);
+    analogWrite(BL_PWM, 40 - correction);
+    analogWrite(BR_PWM, 40 - correction);
+    digitalWrite(FL_DIR, HIGH);
+    digitalWrite(FR_DIR, HIGH);
+    digitalWrite(BL_DIR, HIGH);
+    digitalWrite(BR_DIR, HIGH);
+  }
+  else if (correction > 0)
+  {
+    analogWrite(FL_PWM, 40 + correction);
+    analogWrite(FR_PWM, 40 + correction);
+    analogWrite(BL_PWM, 40 + correction);
+    analogWrite(BR_PWM, 40 + correction);
+    digitalWrite(FL_DIR, LOW);
+    digitalWrite(FR_DIR, LOW);
+    digitalWrite(BL_DIR, LOW);
+    digitalWrite(BR_DIR, LOW);
+  }
+  // chaseGoal(); // while ball still caputred chase goal else search ball
 
   // processDrive();
 
@@ -270,34 +292,5 @@ void loop()
   //  printAllIMUData();
   // readRobotAngle();
   // delay(BNO055_SAMPLERATE_DELAY_MS);
-  DEBUG.println(correction);
-  if (correction < -5)
-  {
-    analogWrite(FL_PWM, 40);
-    analogWrite(FR_PWM, 40);
-    analogWrite(BL_PWM, 40);
-    analogWrite(BR_PWM, 40);
-    digitalWrite(FL_DIR, HIGH);
-    digitalWrite(FR_DIR, HIGH);
-    digitalWrite(BL_DIR, HIGH);
-    digitalWrite(BR_DIR, HIGH);
-  }
-  else if (correction > 5)
-  {
-    analogWrite(FL_PWM, 40);
-    analogWrite(FR_PWM, 40);
-    analogWrite(BL_PWM, 40);
-    analogWrite(BR_PWM, 40);
-    digitalWrite(FL_DIR, LOW);
-    digitalWrite(FR_DIR, LOW);
-    digitalWrite(BL_DIR, LOW);
-    digitalWrite(BR_DIR, LOW);
-  }
-  else
-  {
-    analogWrite(FL_PWM, 0);
-    analogWrite(FR_PWM, 0);
-    analogWrite(BL_PWM, 0);
-    analogWrite(BR_PWM, 0);
-  }
+  // DEBUG.println(correction);
 }
