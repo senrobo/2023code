@@ -19,6 +19,8 @@ struct ballData
   int strength = 0;
 } balldata;
 
+// IMU Stuff
+
 void printAllIMUData()
 {
   sensors_event_t eul, gyr, lac, mag, acc, gra;
@@ -43,11 +45,11 @@ void printAllIMUData()
         (int16_t)vector.z, abs((int32_t)(vector.z * 100) % 100));
   };
   printVector("Euler Angle (º)            ", eul.orientation);
-  printVector("Angular Velocity (rad s⁻¹) ", gyr.gyro);
-  printVector("Acceleration (m s⁻²)       ", acc.acceleration);
-  printVector("Linear Acceleration (m s⁻²)", lac.acceleration);
-  printVector("Gravity (m s⁻²)            ", gra.acceleration);
-  printVector("Magnetic Field (μT)        ", mag.magnetic);
+  // printVector("Angular Velocity (rad s⁻¹) ", gyr.gyro);
+  // printVector("Acceleration (m s⁻²)       ", acc.acceleration);
+  // printVector("Linear Acceleration (m s⁻²)", lac.acceleration);
+  // printVector("Gravity (m s⁻²)            ", gra.acceleration);
+  // printVector("Magnetic Field (μT)        ", mag.magnetic);
 
   DEBUG.printf(
       "Calibration: System = %d Gyroscope = %d Accelerometer = %d "
@@ -96,6 +98,39 @@ void drive()
               constrain(abs(BRSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
 }
 
+void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
+{
+  Serial.print("Accelerometer: ");
+  Serial.print(calibData.accel_offset_x);
+  Serial.print(" ");
+  Serial.print(calibData.accel_offset_y);
+  Serial.print(" ");
+  Serial.print(calibData.accel_offset_z);
+  Serial.print(" ");
+
+  Serial.print("\nGyro: ");
+  Serial.print(calibData.gyro_offset_x);
+  Serial.print(" ");
+  Serial.print(calibData.gyro_offset_y);
+  Serial.print(" ");
+  Serial.print(calibData.gyro_offset_z);
+  Serial.print(" ");
+
+  Serial.print("\nMag: ");
+  Serial.print(calibData.mag_offset_x);
+  Serial.print(" ");
+  Serial.print(calibData.mag_offset_y);
+  Serial.print(" ");
+  Serial.print(calibData.mag_offset_z);
+  Serial.print(" ");
+
+  Serial.print("\nAccel Radius: ");
+  Serial.print(calibData.accel_radius);
+
+  Serial.print("\nMag Radius: ");
+  Serial.print(calibData.mag_radius);
+}
+
 void setup()
 {
   // Serial Defintions
@@ -107,8 +142,40 @@ void setup()
   Wire.begin();
   bno.begin();
   delay(1000);
-  bno.setExtCrystalUse(false); // we do not have an external crystal
   bno.setMode(OPERATION_MODE_IMUPLUS);
+
+  int eeAddress = 0;
+  long bnoID;
+  bool foundCalib = false;
+
+  // Get BNO calibration data from EEPROM
+  EEPROM.get(eeAddress, bnoID);
+
+  adafruit_bno055_offsets_t calibrationData;
+  sensor_t sensor;
+
+  bno.getSensor(&sensor);
+  if (bnoID != sensor.sensor_id)
+  {
+    Serial.println("\nNo Calibration Data for this sensor exists in EEPROM");
+    delay(500);
+  }
+  else
+  {
+    Serial.println("\nFound Calibration for this sensor in EEPROM.");
+    eeAddress += sizeof(long);
+    EEPROM.get(eeAddress, calibrationData);
+
+    displaySensorOffsets(calibrationData);
+
+    Serial.println("\n\nRestoring Calibration data to the BNO055...");
+    bno.setSensorOffsets(calibrationData);
+
+    Serial.println("\n\nCalibration data loaded into BNO055");
+    foundCalib = true;
+  }
+
+  bno.setExtCrystalUse(true);
 
   // Built in LED
   pinMode(BUILTIN_LED, OUTPUT);
@@ -186,7 +253,8 @@ void loop()
   // DEBUG.print(" | ");
   // DEBUG.print("Ball Strength: ");
   // DEBUG.println(balldata.strength);
-  getLightData();
+  // getLightData();
+  // printAllIMUData();
 
   // delay(BNO055_SAMPLERATE_DELAY_MS);
 }

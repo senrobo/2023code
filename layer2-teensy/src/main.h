@@ -7,6 +7,7 @@
 #include "utility/imumaths.h"
 #include "Wire.h"
 #include "SPI.h"
+#include "EEPROM.h"
 
 #define SYNC_BYTE 0b11010110
 
