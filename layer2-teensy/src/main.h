@@ -31,7 +31,9 @@
 // Global Variables
 int16_t bearingToAngle(float bearing);
 int16_t robotAngle = 0;
+int16_t lastError = 0;
 int ballAngle, ballStrength;
+int correction = 0;
 bool ballCaptured, ballFound, kick = false;
 float offsetAngle;
 
@@ -47,5 +49,8 @@ float offsetAngle;
 
 #define BALL_MOVEMENT_A 1e-4F
 #define BALL_MOVEMENT_B 10.0F
+
+#define IMUKP 1
+#define IMUKD 1
 
 #endif

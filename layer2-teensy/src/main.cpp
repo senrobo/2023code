@@ -9,7 +9,7 @@ int8_t temp = bno.getTemp();
 struct Movement
 {
   int16_t angle = 0; // -179(.)99º to +180(.)00º
-  int16_t speed = 50;
+  int16_t speed = 40;
   int16_t angularVelocity = 0; // ~±140 to ~±1024
 } movement;
 
@@ -51,24 +51,31 @@ void printAllIMUData()
   // printVector("Gravity (m s⁻²)            ", gra.acceleration);
   // printVector("Magnetic Field (μT)        ", mag.magnetic);
 
-  DEBUG.printf(
-      "Calibration: System = %d Gyroscope = %d Accelerometer = %d "
-      "Magnetometer = %d\n\n",
-      systemCalib, gyroCalib, accCalib, magCalib);
+  // DEBUG.printf(
+  //     "Calibration: System = %d Gyroscope = %d Accelerometer = %d "
+  //     "Magnetometer = %d\n\n",
+  //     systemCalib, gyroCalib, accCalib, magCalib);
 }
 
-int16_t readRobotAngle()
+void calculateRobotAngle()
 {
+
   sensors_event_t eulerAngles;
   bno.getEvent(&eulerAngles, Adafruit_BNO055::VECTOR_EULER);
-  DEBUG.println(eulerAngles.orientation.x);
+  int robotBearing = round(eulerAngles.orientation.x);
+  int epoopoo = robotBearing <= 180 ? robotBearing : robotBearing - 360;
+  int error = -epoopoo;
+  int correctionKP = error * IMUKP;
+  int correctionKD = (error - lastError) * IMUKD;
+  ycorrection = correctionKP + correctionKD;
+  lastError = error;
 }
 
 void drive()
 {
   // Convert polar to cartesian
-  const auto x = sinf((int)movement.angle * DEG_TO_RAD);
-  const auto y = cosf((int)movement.angle * DEG_TO_RAD);
+  const auto x = sinf(movement.angle * M_PI / 180);
+  const auto y = cosf(movement.angle * M_PI / 180);
 
   // Compute the speeds of the individual motors
   const auto transformSpeed = [](float speed, float angularComponent)
@@ -100,96 +107,35 @@ void drive()
 
 void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
 {
-  Serial.print("Accelerometer: ");
-  Serial.print(calibData.accel_offset_x);
-  Serial.print(" ");
-  Serial.print(calibData.accel_offset_y);
-  Serial.print(" ");
-  Serial.print(calibData.accel_offset_z);
-  Serial.print(" ");
+  DEBUG.print("Accelerometer: ");
+  DEBUG.print(calibData.accel_offset_x);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.accel_offset_y);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.accel_offset_z);
+  DEBUG.print(" ");
 
-  Serial.print("\nGyro: ");
-  Serial.print(calibData.gyro_offset_x);
-  Serial.print(" ");
-  Serial.print(calibData.gyro_offset_y);
-  Serial.print(" ");
-  Serial.print(calibData.gyro_offset_z);
-  Serial.print(" ");
+  DEBUG.print("\nGyro: ");
+  DEBUG.print(calibData.gyro_offset_x);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.gyro_offset_y);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.gyro_offset_z);
+  DEBUG.print(" ");
 
-  Serial.print("\nMag: ");
-  Serial.print(calibData.mag_offset_x);
-  Serial.print(" ");
-  Serial.print(calibData.mag_offset_y);
-  Serial.print(" ");
-  Serial.print(calibData.mag_offset_z);
-  Serial.print(" ");
+  DEBUG.print("\nMag: ");
+  DEBUG.print(calibData.mag_offset_x);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.mag_offset_y);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.mag_offset_z);
+  DEBUG.print(" ");
 
-  Serial.print("\nAccel Radius: ");
-  Serial.print(calibData.accel_radius);
+  DEBUG.print("\nAccel Radius: ");
+  DEBUG.print(calibData.accel_radius);
 
-  Serial.print("\nMag Radius: ");
-  Serial.print(calibData.mag_radius);
-}
-
-void setup()
-{
-  // Serial Defintions
-  DEBUG.begin(115200);
-  IR_SERIAL.begin(115200);
-  CAMERA_SERIAL.begin(115200);
-  LAYER1_SERIAL.begin(115200);
-
-  Wire.begin();
-  bno.begin();
-  delay(1000);
-  bno.setMode(OPERATION_MODE_IMUPLUS);
-
-  int eeAddress = 0;
-  long bnoID;
-  bool foundCalib = false;
-
-  // Get BNO calibration data from EEPROM
-  EEPROM.get(eeAddress, bnoID);
-
-  adafruit_bno055_offsets_t calibrationData;
-  sensor_t sensor;
-
-  bno.getSensor(&sensor);
-  if (bnoID != sensor.sensor_id)
-  {
-    Serial.println("\nNo Calibration Data for this sensor exists in EEPROM");
-    delay(500);
-  }
-  else
-  {
-    Serial.println("\nFound Calibration for this sensor in EEPROM.");
-    eeAddress += sizeof(long);
-    EEPROM.get(eeAddress, calibrationData);
-
-    displaySensorOffsets(calibrationData);
-
-    Serial.println("\n\nRestoring Calibration data to the BNO055...");
-    bno.setSensorOffsets(calibrationData);
-
-    Serial.println("\n\nCalibration data loaded into BNO055");
-    foundCalib = true;
-  }
-
-  bno.setExtCrystalUse(true);
-
-  // Built in LED
-  pinMode(BUILTIN_LED, OUTPUT);
-  digitalWrite(BUILTIN_LED, HIGH);
-
-  // Motor Pins
-  pinMode(FL_PWM, OUTPUT);
-  pinMode(FL_DIR, OUTPUT);
-  pinMode(FR_PWM, OUTPUT);
-  pinMode(FR_DIR, OUTPUT);
-  pinMode(BR_PWM, OUTPUT);
-  pinMode(BR_DIR, OUTPUT);
-  pinMode(BL_PWM, OUTPUT);
-  pinMode(BL_DIR, OUTPUT);
+  DEBUG.print("\nMag Radius: ");
+  DEBUG.print(calibData.mag_radius);
 }
 
 void getIRData()
@@ -235,17 +181,85 @@ void processDrive()
   }
   movement.angle = balldata.angle + (offsetAngle * BALL_MOVEMENT_B);
 }
+
+void setup()
+{
+  // Serial Defintions
+  DEBUG.begin(115200);
+  IR_SERIAL.begin(115200);
+  CAMERA_SERIAL.begin(115200);
+  LAYER1_SERIAL.begin(115200);
+
+  Wire.begin();
+  bno.begin();
+  delay(1000);
+  bno.setMode(OPERATION_MODE_IMUPLUS);
+
+  int eeAddress = 0;
+  long bnoID;
+  bool foundCalib = false;
+
+  // Get BNO calibration data from EEPROM
+  EEPROM.get(eeAddress, bnoID);
+
+  adafruit_bno055_offsets_t calibrationData;
+  sensor_t sensor;
+
+  bno.getSensor(&sensor);
+  if (bnoID != sensor.sensor_id)
+  {
+    DEBUG.println("\nNo Calibration Data for this sensor exists in EEPROM");
+    delay(500);
+  }
+  else
+  {
+    DEBUG.println("\nFound Calibration for this sensor in EEPROM.");
+    eeAddress += sizeof(long);
+    EEPROM.get(eeAddress, calibrationData);
+
+    displaySensorOffsets(calibrationData);
+
+    DEBUG.println("\n\nRestoring Calibration data to the BNO055...");
+    bno.setSensorOffsets(calibrationData);
+
+    DEBUG.println("\n\nCalibration data loaded into BNO055");
+    foundCalib = true;
+  }
+
+  bno.setExtCrystalUse(true);
+
+  // Built in LED
+  pinMode(BUILTIN_LED, OUTPUT);
+  digitalWrite(BUILTIN_LED, HIGH);
+
+  // Motor Pins
+  pinMode(FL_PWM, OUTPUT);
+  pinMode(FL_DIR, OUTPUT);
+  pinMode(FR_PWM, OUTPUT);
+  pinMode(FR_DIR, OUTPUT);
+  pinMode(BR_PWM, OUTPUT);
+  pinMode(BR_DIR, OUTPUT);
+  pinMode(BL_PWM, OUTPUT);
+  pinMode(BL_DIR, OUTPUT);
+}
+
 void loop()
 {
-  // printAllIMUData();
-
-  // movement.speed = 100;
+  // read all sensors
   // getIRData();
+  // getLightData();
+  // check inbounds
+  // if light.In false
+  // moveout
+  // keep straight
+  // calculateRobotAngle();
+  // check if ball exist ? move to ball : center to field via camera
+  // if ball.stregnth != 400
+  // movement.angle = ball.angle
+  // if ball caught analogread
+  // chaseGoal();
+
   // processDrive();
-  // // if (IR_SERIAL.available() > 0)
-  // // {
-  // //   DEBUG.print(char(IR_SERIAL.read()));
-  // // }
 
   // drive();
   // DEBUG.print("Ball Angle: ");
@@ -254,7 +268,8 @@ void loop()
   // DEBUG.print("Ball Strength: ");
   // DEBUG.println(balldata.strength);
   // getLightData();
-  // printAllIMUData();
-
+  //  printAllIMUData();
+  // readRobotAngle();
   // delay(BNO055_SAMPLERATE_DELAY_MS);
+  DEBUG.println(correction);
 }
