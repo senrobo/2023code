@@ -73,8 +73,8 @@ void calculateRobotAngle()
 void drive()
 {
   // Convert polar to cartesian
-  const auto x = sinf(movement.angle * M_PI / 180);
-  const auto y = cosf(movement.angle * M_PI / 180);
+  const auto x = sinf((int)movement.angle * DEG_TO_RAD);
+  const auto y = cosf((int)movement.angle * DEG_TO_RAD);
 
   // Compute the speeds of the individual motors
   const auto transformSpeed = [](float speed, float angularComponent)
@@ -169,7 +169,7 @@ void getLightData()
 
 void faceForwards()
 {
-  if (correction < 0)
+  if (correction < 5)
   {
     analogWrite(FL_PWM, 40 - correction);
     analogWrite(FR_PWM, 40 - correction);
@@ -180,7 +180,7 @@ void faceForwards()
     digitalWrite(BL_DIR, HIGH);
     digitalWrite(BR_DIR, HIGH);
   }
-  else if (correction > 0)
+  else if (correction > -5)
   {
     analogWrite(FL_PWM, 40 + correction);
     analogWrite(FR_PWM, 40 + correction);
@@ -191,6 +191,14 @@ void faceForwards()
     digitalWrite(BL_DIR, LOW);
     digitalWrite(BR_DIR, LOW);
   }
+}
+
+void stop()
+{
+  analogWrite(FL_PWM, 0);
+  analogWrite(FR_PWM, 0);
+  analogWrite(BL_PWM, 0);
+  analogWrite(BR_PWM, 0);
 }
 
 void setup()
@@ -262,8 +270,24 @@ void loop()
   // if light.In false
   // moveout
   getIRData();
+  movement.angle = balldata.angle;
+  movement.speed = 50;
+  drive();
 
-  DEBUG.println(balldata.strength);
+  // if (balldata.angle != 400)
+  // {
+  //   // return to center
+  // }
+  // else
+  // {
+  //   if (balldata.angle <= 45 || balldata.angle >= 315)
+  //   {
+  //     // move forward
+  //     movement.angle = balldata.angle;
+  //     movement.speed = 50;
+  //     drive();
+  //   }
+  // }
   // check if ball exist ? move to ball : center to field via camera
   // if ball.stregnth != 400
   // movement.angle = ball.angle
@@ -282,5 +306,6 @@ void loop()
   //  printAllIMUData();
   // readRobotAngle();
   // delay(BNO055_SAMPLERATE_DELAY_MS);
-  // DEBUG.println(correction);
+  // DEBUG.print(correction);
+  DEBUG.println(balldata.angle);
 }
