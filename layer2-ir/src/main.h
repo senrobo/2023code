@@ -65,3 +65,6 @@ int mod(int x, int m);
 #define IRTwentyTwo PB0;
 #define IRTwentyThree PA7;
 #define IRTwentyFour PA6;
+
+#define BALL_FAR_STRENGTH 0
+#define BALL_CLOSE_STRENGTH 200

@@ -18,8 +18,8 @@ int mod(int x, int m)
 void setup()
 {
   Serial2.begin(115200);
-  pinMode(PB15, OUTPUT);
-  digitalWrite(PB15, HIGH);
+  pinMode(PC13, OUTPUT);
+  digitalWrite(PC13, HIGH);
 
   pinMode(PA5, INPUT);
   pinMode(PA4, INPUT);
@@ -121,7 +121,7 @@ void sortValues()
   }
 }
 
-void calculateAngleStrength(int n)
+void calculateAngle(int n)
 {
   int x = 0;
   int y = 0;
@@ -141,6 +141,7 @@ void calculateAngleStrength(int n)
     angle = mod(radiansToDegrees(atan2(y, x)), 360);
   }
   strength = sqrt(x * x + y * y);
+  strength = constrain(((double)strength - (double)BALL_FAR_STRENGTH) / ((double)BALL_CLOSE_STRENGTH - BALL_FAR_STRENGTH), 0, 1);
 }
 
 void loop()
@@ -150,7 +151,7 @@ void loop()
   {
     finishRead();
     sortValues();
-    calculateAngleStrength(6);
+    calculateAngle(8);
   }
   lastUp = micros();
   // Serial2.print("Angle: ");
@@ -159,13 +160,14 @@ void loop()
   // Serial2.println(strength);
 
   // Create a buffer to send the data over serial and the size of the buffer is the total combined size of the angle stregnth and sync byte in BYTES
-  byte buf[5U];
+  byte buf[9U];
 
   // Set the first byte of the buffer to the sync byte
   buf[0] = SYNC_BYTE;
 
   // Copy the angle and strength into the buffer
   memcpy(buf + 1U, &angle, sizeof(angle));
+  memcpy(buf + 1U + sizeof(angle), &strength, sizeof(strength));
 
   // Print the buffer to serial with printf
   Serial2.write(buf, sizeof(buf));

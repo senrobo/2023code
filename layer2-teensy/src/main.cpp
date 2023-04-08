@@ -19,6 +19,33 @@ struct ballData
   int strength = 0;
 } balldata;
 
+int mod(int x, int m)
+{
+  int r = x % m;
+  return r < 0 ? r + m : r;
+}
+
+double angleBetween(double angleCounterClockwise, double angleClockwise)
+{
+  return mod(angleClockwise - angleCounterClockwise, 360);
+}
+
+double smallestAngleBetween(double angle1, double angle2)
+{
+  double ang = angleBetween(angle1, angle2);
+  return fmin(ang, 360 - ang);
+}
+
+int sign(int value)
+{
+  return value >= 0 ? 1 : -1;
+}
+
+int sign(double value)
+{
+  return value >= 0 ? 1 : -1;
+}
+
 // IMU Stuff
 
 void printAllIMUData()
@@ -140,16 +167,17 @@ void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
 void getIRData()
 {
   // Loop through the IR_SERIAL buffer to find the sync byte
-  while (IR_SERIAL.available() >= 5U)
+  while (IR_SERIAL.available() >= 9U)
   {
     if (IR_SERIAL.read() == SYNC_BYTE)
     {
       // Subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
-      byte buf[4U];
-      IR_SERIAL.readBytes(buf, 4U);
+      byte buf[8U];
+      IR_SERIAL.readBytes(buf, 8U);
 
       // Copy the last 8 buffer bytes into the ballAngle and ballStrength variables
       memcpy(&balldata.angle, buf, 4U);
+      memcpy(&balldata.strength, buf + 4U, 4U);
 
       // // Print the buffer to serial with printf
       // for (int i = 0; i < 8; ++i)
@@ -199,6 +227,21 @@ void stop()
   analogWrite(FR_PWM, 0);
   analogWrite(BL_PWM, 0);
   analogWrite(BR_PWM, 0);
+}
+
+void calculateOrbit()
+{
+  // Orbit based on ball angle and strength
+
+  // Add on an angle to the ball angle depending on the ball's angle. Exponential function
+  double ballAngleDifference = -sign(balldata.angle - 180) * fmin(90, 0.4 * pow(MATH_E, 0.15 * (double)smallestAngleBetween(balldata.angle, 0)));
+
+  // Multiply the addition by distance. The further the ball, the more the robot moves towards the ball. Also an exponential function
+  double distanceMultiplier = constrain(0.02 * balldata.strength * pow(MATH_E, 4.5 * balldata.strength), 0, 1);
+  double angleAddition = ballAngleDifference * distanceMultiplier;
+
+  movement.angle = mod(balldata.angle + angleAddition, 360);
+  movement.speed = 42 + (double)(50 - 42) * (1.0 - (double)abs(angleAddition) / 90.0);
 }
 
 void setup()
@@ -270,9 +313,11 @@ void loop()
   // if light.In false
   // moveout
   getIRData();
-  movement.angle = balldata.angle;
-  movement.speed = 50;
+  calculateOrbit();
   drive();
+  // movement.angle = balldata.angle;
+  // movement.speed = 50;
+  // drive();
 
   // if (balldata.angle != 400)
   // {
@@ -307,5 +352,4 @@ void loop()
   // readRobotAngle();
   // delay(BNO055_SAMPLERATE_DELAY_MS);
   // DEBUG.print(correction);
-  DEBUG.println(balldata.angle);
 }

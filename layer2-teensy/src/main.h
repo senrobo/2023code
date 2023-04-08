@@ -52,5 +52,6 @@ float offsetAngle;
 
 #define IMUKP 0.1
 #define IMUKD 1
+#define MATH_E 2.7182818284590452353602874713527
 
 #endif
