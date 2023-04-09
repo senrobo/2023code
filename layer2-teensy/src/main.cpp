@@ -2,9 +2,12 @@
 
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
-int8_t temp = bno.getTemp();
-
 #define BNO055_SAMPLERATE_DELAY_MS (100)
+
+float deg2rad(float angle)
+{
+  return angle * PI / 180;
+}
 
 struct Movement
 {
@@ -95,6 +98,43 @@ void calculateRobotAngle()
   int correctionKD = (error - lastError) * IMUKD;
   correction = correctionKP + correctionKD;
   lastError = error;
+}
+
+void setMove(float speed, float angle, float rotation, float angSpeed)
+{
+  // angle between motors is 100 from left to right, 80 from top to bottom
+  if (angSpeed == -1.0)
+    angSpeed = speed;
+
+  const auto a = sin(deg2rad(50 + angle)) * 1.0154266118857451;
+  const auto b = sin(deg2rad(50 - angle)) * 1.0154266118857451;
+
+  const auto fl = a * speed + angSpeed * rotation * 0.1;
+  const auto fr = b * speed - angSpeed * rotation * 0.1;
+  const auto bl = b * speed + angSpeed * rotation * 0.1;
+  const auto br = a * speed - angSpeed * rotation * 0.1;
+
+  FLSpeed = round(fl);
+  FRSpeed = round(fr);
+  BLSpeed = round(bl);
+  BRSpeed = round(br);
+}
+
+void moveOut()
+{
+  // Set the motor directions and speeds
+  digitalWriteFast(FL_DIR, FLSpeed > 0 ? LOW : HIGH);
+  digitalWriteFast(FR_DIR, FRSpeed > 0 ? HIGH : LOW);
+  digitalWriteFast(BL_DIR, BLSpeed > 0 ? LOW : HIGH);
+  digitalWriteFast(BR_DIR, BRSpeed > 0 ? HIGH : LOW);
+  analogWrite(FL_PWM,
+              constrain(abs(FLSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
+  analogWrite(FR_PWM,
+              constrain(abs(FRSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
+  analogWrite(BL_PWM,
+              constrain(abs(BLSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
+  analogWrite(BR_PWM,
+              constrain(abs(BRSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
 }
 
 void drive()
@@ -197,7 +237,8 @@ void getLightData()
 
 void faceForwards()
 {
-  if (correction < 5)
+
+  if (correction < 2)
   {
     analogWrite(FL_PWM, 40 - correction);
     analogWrite(FR_PWM, 40 - correction);
@@ -208,7 +249,7 @@ void faceForwards()
     digitalWrite(BL_DIR, HIGH);
     digitalWrite(BR_DIR, HIGH);
   }
-  else if (correction > -5)
+  else if (correction > -2)
   {
     analogWrite(FL_PWM, 40 + correction);
     analogWrite(FR_PWM, 40 + correction);
@@ -218,6 +259,13 @@ void faceForwards()
     digitalWrite(FR_DIR, LOW);
     digitalWrite(BL_DIR, LOW);
     digitalWrite(BR_DIR, LOW);
+  }
+  else
+  {
+    analogWrite(FL_PWM, 0);
+    analogWrite(FR_PWM, 0);
+    analogWrite(BL_PWM, 0);
+    analogWrite(BR_PWM, 0);
   }
 }
 
@@ -236,12 +284,13 @@ void calculateOrbit()
   // Add on an angle to the ball angle depending on the ball's angle. Exponential function
   double ballAngleDifference = -sign(balldata.angle - 180) * fmin(90, 0.4 * pow(MATH_E, 0.15 * (double)smallestAngleBetween(balldata.angle, 0)));
 
-  // Multiply the addition by distance. The further the ball, the more the robot moves towards the ball. Also an exponential function
-  double distanceMultiplier = constrain(0.02 * balldata.strength * pow(MATH_E, 4.5 * balldata.strength), 0, 1);
+  // Multiply the addition by distance. The further the ball, the more the robot moves towards the ball. Also an exponential function //0.02,4.5
+  double distanceMultiplier = constrain(0.2 * balldata.strength * pow(MATH_E, 10 * balldata.strength), 0, 1);
   double angleAddition = ballAngleDifference * distanceMultiplier;
 
   movement.angle = mod(balldata.angle + angleAddition, 360);
-  movement.speed = 42 + (double)(50 - 42) * (1.0 - (double)abs(angleAddition) / 90.0);
+  movement.speed = 40 + (double)(50 - 40) * (1.0 - (double)abs(angleAddition) / 90.0);
+  DEBUG.println(distanceMultiplier);
 }
 
 void setup()
@@ -290,10 +339,6 @@ void setup()
 
   bno.setExtCrystalUse(true);
 
-  // Built in LED
-  pinMode(BUILTIN_LED, OUTPUT);
-  digitalWrite(BUILTIN_LED, HIGH);
-
   // Motor Pins
   pinMode(FL_PWM, OUTPUT);
   pinMode(FL_DIR, OUTPUT);
@@ -303,53 +348,114 @@ void setup()
   pinMode(BR_DIR, OUTPUT);
   pinMode(BL_PWM, OUTPUT);
   pinMode(BL_DIR, OUTPUT);
+
+  // Built in LED
+  pinMode(BUILTIN_LED, OUTPUT);
+  digitalWrite(BUILTIN_LED, HIGH);
 }
 
 void loop()
 {
-  // read all sensors
-  // getLightData();
-  // check inbounds
-  // if light.In false
-  // moveout
-  getIRData();
-  calculateOrbit();
-  drive();
-  // movement.angle = balldata.angle;
-  // movement.speed = 50;
-  // drive();
+  calculateRobotAngle();
+  if (correction < 0)
+  {
+    analogWrite(FL_PWM, 40 - correction);
+    analogWrite(FR_PWM, 40 - correction);
+    analogWrite(BL_PWM, 40 - correction);
+    analogWrite(BR_PWM, 40 - correction);
+    digitalWrite(FL_DIR, HIGH);
+    digitalWrite(FR_DIR, HIGH);
+    digitalWrite(BL_DIR, HIGH);
+    digitalWrite(BR_DIR, HIGH);
+  }
+  else if (correction > 0)
+  {
+    analogWrite(FL_PWM, 40 + correction);
+    analogWrite(FR_PWM, 40 + correction);
+    analogWrite(BL_PWM, 40 + correction);
+    analogWrite(BR_PWM, 40 + correction);
+    digitalWrite(FL_DIR, LOW);
+    digitalWrite(FR_DIR, LOW);
+    digitalWrite(BL_DIR, LOW);
+    digitalWrite(BR_DIR, LOW);
+  }
+  else
+  {
+    getIRData();
+    if (balldata.strength != 400)
+    {
+      // move to ball
+      calculateOrbit();
+      drive();
+    }
+  }
 
-  // if (balldata.angle != 400)
+  // getIRData();
+  // if (balldata.strength != 400)
   // {
-  //   // return to center
+  //   // move to ball
+  //   calculateOrbit();
+  //   drive();
   // }
-  // else
-  // {
-  //   if (balldata.angle <= 45 || balldata.angle >= 315)
-  //   {
-  //     // move forward
-  //     movement.angle = balldata.angle;
-  //     movement.speed = 50;
-  //     drive();
-  //   }
-  // }
-  // check if ball exist ? move to ball : center to field via camera
-  // if ball.stregnth != 400
-  // movement.angle = ball.angle
-  // if ball caught analogread
-  // keep straight
-  // calculateRobotAngle();
-  // faceForwards();
-  // chaseGoal(); // while ball still caputred chase goal else search ball
-
-  // DEBUG.print("Ball Angle: ");
-  // DEBUG.print(movement.angle);
-  // DEBUG.print(" | ");
-  // DEBUG.print("Ball Strength: ");
-  // DEBUG.println(balldata.strength);
-  // getLightData();
-  //  printAllIMUData();
-  // readRobotAngle();
-  // delay(BNO055_SAMPLERATE_DELAY_MS);
-  // DEBUG.print(correction);
 }
+
+// read all sensors
+// getLightData();
+// check inbounds
+// if light.In false
+// moveout
+// getIRData();
+// // check if orientation is correct
+// calculateRobotAngle();
+// if (abs(correction) > 5)
+// {
+//   // keep looping until robot is facing forwards
+//   while (abs(correction) > 5)
+//   {
+//     calculateRobotAngle();
+//     faceForwards();
+//   }
+// }
+// else
+// {
+//   // check if ball exist
+//   if (balldata.strength != 400)
+//   {
+//     // move to ball
+//     calculateOrbit();
+//     drive();
+//   }
+// if (balldata.strength != 400)
+// {
+//   // move to ball
+//   calculateOrbit();
+//   drive();
+// }
+// else
+// {
+//   // center to field via camera
+//   // calculateRobotAngle();
+//   // faceForwards();
+//   // chaseGoal(); // while ball still caputred chase goal else search ball
+//   stop();
+// }
+// movement.angle = balldata.angle;
+// movement.speed = 50;
+// drive();
+// check if ball exist ? move to ball : center to field via camera
+// if ball.stregnth != 400
+// movement.angle = ball.angle
+// if ball caught analogread
+// keep straight
+// calculateRobotAngle();
+// faceForwards();
+// chaseGoal(); // while ball still caputred chase goal else search ball
+
+// DEBUG.print("Ball Angle: ");
+// DEBUG.print(movement.angle);
+// DEBUG.print(" | ");
+// DEBUG.print("Ball Strength: ");
+// DEBUG.println(balldata.strength);
+// getLightData();
+//  printAllIMUData();
+// readRobotAngle();

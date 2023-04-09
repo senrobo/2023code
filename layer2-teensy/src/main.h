@@ -54,4 +54,6 @@ float offsetAngle;
 #define IMUKD 1
 #define MATH_E 2.7182818284590452353602874713527
 
+int FLSpeed, FRSpeed, BLSpeed, BRSpeed = 0;
+
 #endif

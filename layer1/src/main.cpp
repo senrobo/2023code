@@ -73,33 +73,33 @@ void updateSensors()
   }
 }
 
-// void processLightData()
-// {
-//   if (outSensors != 0)
-//   {
-//     for (int i = 0; i < outSensors; i++)
-//     {
-//       for (int j = 1; j < outSensors; j++)
-//       {
-//         int tmpDiff = angleDiff(lineDetected[i] * ldrAngle, lineDetected[j] * ldrAngle);
-//         if (tmpDiff > largestDiff)
-//         {
-//           clusterStart = lineDetected[i] * ldrAngle;
-//           clusterEnd = lineDetected[j] * ldrAngle;
-//           largestDiff = tmpDiff;
-//         }
-//       }
-//     }
+void processLightData()
+{
+  if (outSensors != 0)
+  {
+    for (int i = 0; i < outSensors; i++)
+    {
+      for (int j = 1; j < outSensors; j++)
+      {
+        int tmpDiff = angleDiff(lineDetected[i] * ldrAngle, lineDetected[j] * ldrAngle);
+        if (tmpDiff > largestDiff)
+        {
+          clusterStart = lineDetected[i] * ldrAngle;
+          clusterEnd = lineDetected[j] * ldrAngle;
+          largestDiff = tmpDiff;
+        }
+      }
+    }
 
-//     float chordLength = angleDiff(clusterStart, clusterEnd) / 180;
-//     float lineAngle = angleBetween(clusterStart, clusterEnd) <= 180 ? midAngleBetween(clusterStart, clusterEnd) : midAngleBetween(clusterEnd, clusterStart);
-//   }
-//   else
-//   {
-//     bool onLine = false;
-//   }
-//   outSensors = 0;
-// }
+    float chordLength = angleDiff(clusterStart, clusterEnd) / 180;
+    float lineAngle = angleBetween(clusterStart, clusterEnd) <= 180 ? midAngleBetween(clusterStart, clusterEnd) : midAngleBetween(clusterEnd, clusterStart);
+  }
+  else
+  {
+    bool onLine = false;
+  }
+  outSensors = 0;
+}
 
 void loop()
 {
