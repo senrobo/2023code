@@ -11,13 +11,14 @@ void setup()
   digitalWrite(led, HIGH);
 
   pinMode(mux1, INPUT);
-  pinMode(mux2, INPUT);
+  pinMode(PB7, INPUT);
 
   // if want to use digitalWriteFast us pinMode(pinNametoDigitalPin(PINNAME), OUTPUT/INPUT))
   pinMode(m1s0, OUTPUT);
   pinMode(m1s1, OUTPUT);
   pinMode(m1s2, OUTPUT);
   pinMode(m1s3, OUTPUT);
+
   pinMode(m2s0, OUTPUT);
   pinMode(m2s1, OUTPUT);
   pinMode(m2s2, OUTPUT);
@@ -42,11 +43,11 @@ void updateSensors()
     int idx = lightCnt;
     lightVals[idx] = analogRead(mux1);
 
-    if (lightVals[idx] > fixedThreshFirstBot[idx])
-    {
-      lineDetected[outSensors] = idx;
-      outSensors++;
-    }
+    // if (lightVals[idx] > fixedThreshFirstBot[idx])
+    // {
+    //   lineDetected[outSensors] = idx;
+    //   outSensors++;
+    // }
 
     lightCnt++;
     lightCnt %= 16;
@@ -54,11 +55,11 @@ void updateSensors()
     idx = lightCnt + 16;
     lightVals[idx] = analogRead(mux2);
 
-    if (lightVals[idx] > fixedThreshFirstBot[idx])
-    {
-      lineDetected[outSensors] = idx;
-      outSensors++;
-    }
+    // if (lightVals[idx] > fixedThreshFirstBot[idx])
+    // {
+    //   lineDetected[outSensors] = idx;
+    //   outSensors++;
+    // }
 
     digitalWrite(m1s0, muxChannel[lightCnt][0]);
     digitalWrite(m1s1, muxChannel[lightCnt][1]);
@@ -73,43 +74,93 @@ void updateSensors()
   }
 }
 
-void processLightData()
+void calibrate()
 {
-  if (outSensors != 0)
+  for (int i = 0; i < 30; i++)
   {
-    for (int i = 0; i < outSensors; i++)
+    maxVals[i] = 0;
+    minVals[i] = 1200;
+  }
+  while (true)
+  {
+    updateSensors();
+    for (int i = 0; i < 30; i++)
     {
-      for (int j = 1; j < outSensors; j++)
+      if (lightVals[i] > maxVals[i])
       {
-        int tmpDiff = angleDiff(lineDetected[i] * ldrAngle, lineDetected[j] * ldrAngle);
-        if (tmpDiff > largestDiff)
-        {
-          clusterStart = lineDetected[i] * ldrAngle;
-          clusterEnd = lineDetected[j] * ldrAngle;
-          largestDiff = tmpDiff;
-        }
+        maxVals[i] = lightVals[i];
       }
-    }
+      if (lightVals[i] < minVals[i])
+      {
+        minVals[i] = lightVals[i];
+      }
 
-    float chordLength = angleDiff(clusterStart, clusterEnd) / 180;
-    float lineAngle = angleBetween(clusterStart, clusterEnd) <= 180 ? midAngleBetween(clusterStart, clusterEnd) : midAngleBetween(clusterEnd, clusterStart);
+      lightThresh[i] = (maxVals[i] + minVals[i]) / 2;
+    }
+    for (int i = 0; i < 30; i++)
+    {
+      TeensySerial.print(i);
+      TeensySerial.print(" | ");
+      TeensySerial.print(lightThresh[i]);
+      TeensySerial.print(" | ");
+    }
+    TeensySerial.println();
   }
-  else
-  {
-    bool onLine = false;
-  }
-  outSensors = 0;
+  // Print TH Values
 }
+// void processLightData()
+// {
+//   if (outSensors != 0)
+//   {
+//     for (int i = 0; i < outSensors; i++)
+//     {
+//       for (int j = 1; j < outSensors; j++)
+//       {
+//         int tmpDiff = angleDiff(lineDetected[i] * ldrAngle, lineDetected[j] * ldrAngle);
+//         if (tmpDiff > largestDiff)
+//         {
+//           clusterStart = lineDetected[i] * ldrAngle;
+//           clusterEnd = lineDetected[j] * ldrAngle;
+//           largestDiff = tmpDiff;
+//         }
+//       }
+//     }
+
+//     float chordLength = angleDiff(clusterStart, clusterEnd) / 180;
+//     float lineAngle = angleBetween(clusterStart, clusterEnd) <= 180 ? midAngleBetween(clusterStart, clusterEnd) : midAngleBetween(clusterEnd, clusterStart);
+//   }
+//   else
+//   {
+//     bool onLine = false;
+//   }
+//   outSensors = 0;
+// }
 
 void loop()
 {
   // put your main code here, to run repeatedly:
-  updateSensors();
-  for (int i = 0; i < 30; i++)
-  {
+  // updateSensors();
 
-    TeensySerial.print(lightVals[i]);
-    TeensySerial.print(" | ");
-  }
-  TeensySerial.println();
+  // for (int i = 0; i < 16; i++)
+  // {
+  //   TeensySerial.print(i);
+  //   TeensySerial.print(" | ");
+  //   TeensySerial.print(lightVals[i]);
+  //   TeensySerial.print(" | ");
+  // }
+  // TeensySerial.println();
+  // Print TH Values
+  // for (int i = 0; i < 30; i++)
+  // {
+  //   TeensySerial.print(i);
+  //   TeensySerial.print(" | ");
+  //   TeensySerial.print(minVals[i]);
+  //   TeensySerial.print(" | ");
+  //   TeensySerial.print(maxVals[i]);
+  //   TeensySerial.print(" | ");
+  //   TeensySerial.print(lightThresh[i]);
+  //   TeensySerial.print(" | ");
+  // }
+  // TeensySerial.println();
+  calibrate();
 }

@@ -8,7 +8,8 @@
 
 // STM32 Pinouts
 #define mux1 PB0
-#define mux2 PB7
+#define mux2 PA4
+
 #define m1s0 PB1
 #define m1s1 PB2
 #define m1s2 PA6
@@ -17,7 +18,6 @@
 #define m2s1 PB9
 #define m2s2 PB6
 #define m2s3 PB5
-#define sol PB10
 #define led PC13
 
 // Initilalize Variables
@@ -38,7 +38,7 @@ int ldrAngle = 12;
 int largestDiff = 0;
 int clusterStart = 0;
 int clusterEnd = 0;
-
+int lightThresh[30];
 int fixedThreshFirstBot[30] = {224, 333, 372, 224, 388, 224, 398, 406, 224, 400, 391, 402, 336, 164, 224, 224, 224, 224, 224, 398, 391, 402, 336, 164, 224, 271, 224, 333, 224, 224};
 
 int muxChannel[16][4] = {

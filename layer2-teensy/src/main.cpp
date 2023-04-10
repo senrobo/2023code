@@ -98,6 +98,7 @@ void calculateRobotAngle()
   int correctionKD = (error - lastError) * IMUKD;
   correction = correctionKP + correctionKD;
   lastError = error;
+  DEBUG.println(robotBearing);
 }
 
 void setMove(float speed, float angle, float rotation, float angSpeed)
@@ -106,8 +107,8 @@ void setMove(float speed, float angle, float rotation, float angSpeed)
   if (angSpeed == -1.0)
     angSpeed = speed;
 
-  const auto a = sin(deg2rad(50 + angle)) * 1.0154266118857451;
-  const auto b = sin(deg2rad(50 - angle)) * 1.0154266118857451;
+  const auto a = sin(movement.angle * DEG_TO_RAD) * 0.70710678118654752440084436210485F;
+  const auto b = sin(movement.angle * DEG_TO_RAD) * 0.70710678118654752440084436210485F;
 
   const auto fl = a * speed + angSpeed * rotation * 0.1;
   const auto fr = b * speed - angSpeed * rotation * 0.1;
@@ -140,8 +141,8 @@ void moveOut()
 void drive()
 {
   // Convert polar to cartesian
-  const auto x = sinf((int)movement.angle * DEG_TO_RAD);
-  const auto y = cosf((int)movement.angle * DEG_TO_RAD);
+  const auto x = sin((int)movement.angle * DEG_TO_RAD);
+  const auto y = cos((int)movement.angle * DEG_TO_RAD);
 
   // Compute the speeds of the individual motors
   const auto transformSpeed = [](float speed, float angularComponent)
@@ -290,7 +291,6 @@ void calculateOrbit()
 
   movement.angle = mod(balldata.angle + angleAddition, 360);
   movement.speed = 40 + (double)(50 - 40) * (1.0 - (double)abs(angleAddition) / 90.0);
-  DEBUG.println(distanceMultiplier);
 }
 
 void setup()
@@ -356,39 +356,19 @@ void setup()
 
 void loop()
 {
-  calculateRobotAngle();
-  if (correction < 0)
-  {
-    analogWrite(FL_PWM, 40 - correction);
-    analogWrite(FR_PWM, 40 - correction);
-    analogWrite(BL_PWM, 40 - correction);
-    analogWrite(BR_PWM, 40 - correction);
-    digitalWrite(FL_DIR, HIGH);
-    digitalWrite(FR_DIR, HIGH);
-    digitalWrite(BL_DIR, HIGH);
-    digitalWrite(BR_DIR, HIGH);
-  }
-  else if (correction > 0)
-  {
-    analogWrite(FL_PWM, 40 + correction);
-    analogWrite(FR_PWM, 40 + correction);
-    analogWrite(BL_PWM, 40 + correction);
-    analogWrite(BR_PWM, 40 + correction);
-    digitalWrite(FL_DIR, LOW);
-    digitalWrite(FR_DIR, LOW);
-    digitalWrite(BL_DIR, LOW);
-    digitalWrite(BR_DIR, LOW);
-  }
-  else
-  {
-    getIRData();
-    if (balldata.strength != 400)
-    {
-      // move to ball
-      calculateOrbit();
-      drive();
-    }
-  }
+
+  // drive();
+  getLightData();
+  // else
+  // {
+  //   getIRData();
+  //   if (balldata.strength != 400)
+  //   {
+  //     // move to ball
+  //     calculateOrbit();
+  //     drive();
+  //   }
+  // }
 
   // getIRData();
   // if (balldata.strength != 400)
