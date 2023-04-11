@@ -75,16 +75,16 @@ void printAllIMUData()
         (int16_t)vector.z, abs((int32_t)(vector.z * 100) % 100));
   };
   printVector("Euler Angle (º)            ", eul.orientation);
-  // printVector("Angular Velocity (rad s⁻¹) ", gyr.gyro);
-  // printVector("Acceleration (m s⁻²)       ", acc.acceleration);
-  // printVector("Linear Acceleration (m s⁻²)", lac.acceleration);
-  // printVector("Gravity (m s⁻²)            ", gra.acceleration);
-  // printVector("Magnetic Field (μT)        ", mag.magnetic);
+  printVector("Angular Velocity (rad s⁻¹) ", gyr.gyro);
+  printVector("Acceleration (m s⁻²)       ", acc.acceleration);
+  printVector("Linear Acceleration (m s⁻²)", lac.acceleration);
+  printVector("Gravity (m s⁻²)            ", gra.acceleration);
+  printVector("Magnetic Field (μT)        ", mag.magnetic);
 
-  // DEBUG.printf(
-  //     "Calibration: System = %d Gyroscope = %d Accelerometer = %d "
-  //     "Magnetometer = %d\n\n",
-  //     systemCalib, gyroCalib, accCalib, magCalib);
+  DEBUG.printf(
+      "Calibration: System = %d Gyroscope = %d Accelerometer = %d "
+      "Magnetometer = %d\n\n",
+      systemCalib, gyroCalib, accCalib, magCalib);
 }
 
 void calculateRobotAngle()
@@ -95,73 +95,44 @@ void calculateRobotAngle()
   int epoopoo = robotBearing <= 180 ? robotBearing : robotBearing - 360;
   int error = -epoopoo;
   int correctionKP = error * IMUKP;
+  int correctionKI = (error + correctionKI) * IMUKI;
   int correctionKD = (error - lastError) * IMUKD;
-  correction = correctionKP + correctionKD;
+  correction = correctionKP + correctionKI + correctionKD;
   lastError = error;
-  DEBUG.println(robotBearing);
-}
-
-void setMove(float speed, float angle, float rotation, float angSpeed)
-{
-  // angle between motors is 100 from left to right, 80 from top to bottom
-  if (angSpeed == -1.0)
-    angSpeed = speed;
-
-  const auto a = sin(movement.angle * DEG_TO_RAD) * 0.70710678118654752440084436210485F;
-  const auto b = sin(movement.angle * DEG_TO_RAD) * 0.70710678118654752440084436210485F;
-
-  const auto fl = a * speed + angSpeed * rotation * 0.1;
-  const auto fr = b * speed - angSpeed * rotation * 0.1;
-  const auto bl = b * speed + angSpeed * rotation * 0.1;
-  const auto br = a * speed - angSpeed * rotation * 0.1;
-
-  FLSpeed = round(fl);
-  FRSpeed = round(fr);
-  BLSpeed = round(bl);
-  BRSpeed = round(br);
-}
-
-void moveOut()
-{
-  // Set the motor directions and speeds
-  digitalWriteFast(FL_DIR, FLSpeed > 0 ? LOW : HIGH);
-  digitalWriteFast(FR_DIR, FRSpeed > 0 ? HIGH : LOW);
-  digitalWriteFast(BL_DIR, BLSpeed > 0 ? LOW : HIGH);
-  digitalWriteFast(BR_DIR, BRSpeed > 0 ? HIGH : LOW);
-  analogWrite(FL_PWM,
-              constrain(abs(FLSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
-  analogWrite(FR_PWM,
-              constrain(abs(FRSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
-  analogWrite(BL_PWM,
-              constrain(abs(BLSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
-  analogWrite(BR_PWM,
-              constrain(abs(BRSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
 }
 
 void drive()
 {
   // Convert polar to cartesian
-  const auto x = sin((int)movement.angle * DEG_TO_RAD);
-  const auto y = cos((int)movement.angle * DEG_TO_RAD);
+  const auto x = sin(movement.angle * DEG_TO_RAD);
+  const auto y = cos(movement.angle * DEG_TO_RAD);
 
   // Compute the speeds of the individual motors
   const auto transformSpeed = [](float speed, float angularComponent)
   {
     return (int16_t)roundf(speed * movement.speed + angularComponent);
   };
-  // Find angular component
-  const auto angular = ANGULAR_VELOCITY_MULTIPLIER * movement.angularVelocity;
   // Compute speeds
-  const int16_t FLSpeed = transformSpeed(x * COS45 + y * SIN45, angular);
-  const int16_t FRSpeed = transformSpeed(x * -COS45 + y * SIN45, -angular);
-  const int16_t BLSpeed = transformSpeed(x * -COS45 + y * SIN45, +angular);
-  const int16_t BRSpeed = transformSpeed(x * COS45 + y * SIN45, -angular);
+  const int16_t FLSpeed = transformSpeed(x * COS45 + y * SIN45, movement.angularVelocity); // Positive Angular is clockwise
+  const int16_t FRSpeed = transformSpeed(x * -COS45 + y * SIN45, -movement.angularVelocity);
+  const int16_t BLSpeed = transformSpeed(x * -COS45 + y * SIN45, movement.angularVelocity);
+  const int16_t BRSpeed = transformSpeed(x * COS45 + y * SIN45, -movement.angularVelocity);
+
+  // Constrain motor speed
+  // auto constrainSpeed = [](int16_t speed)
+  // {
+  //   // If the speed is below the stall speed, don't bother moving
+  //   if (abs(speed) < DRIVE_STALL_SPEED)
+  //     return 0;
+  //   return min(abs(speed), DRIVE_MAX_SPEED);
+  // };
 
   // Set the motor directions and speeds
   digitalWriteFast(FL_DIR, FLSpeed > 0 ? LOW : HIGH);
   digitalWriteFast(FR_DIR, FRSpeed > 0 ? HIGH : LOW);
   digitalWriteFast(BL_DIR, BLSpeed > 0 ? LOW : HIGH);
   digitalWriteFast(BR_DIR, BRSpeed > 0 ? HIGH : LOW);
+
   analogWrite(FL_PWM,
               constrain(abs(FLSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
   analogWrite(FR_PWM,
@@ -236,40 +207,6 @@ void getLightData()
   }
 }
 
-void faceForwards()
-{
-
-  if (correction < 2)
-  {
-    analogWrite(FL_PWM, 40 - correction);
-    analogWrite(FR_PWM, 40 - correction);
-    analogWrite(BL_PWM, 40 - correction);
-    analogWrite(BR_PWM, 40 - correction);
-    digitalWrite(FL_DIR, HIGH);
-    digitalWrite(FR_DIR, HIGH);
-    digitalWrite(BL_DIR, HIGH);
-    digitalWrite(BR_DIR, HIGH);
-  }
-  else if (correction > -2)
-  {
-    analogWrite(FL_PWM, 40 + correction);
-    analogWrite(FR_PWM, 40 + correction);
-    analogWrite(BL_PWM, 40 + correction);
-    analogWrite(BR_PWM, 40 + correction);
-    digitalWrite(FL_DIR, LOW);
-    digitalWrite(FR_DIR, LOW);
-    digitalWrite(BL_DIR, LOW);
-    digitalWrite(BR_DIR, LOW);
-  }
-  else
-  {
-    analogWrite(FL_PWM, 0);
-    analogWrite(FR_PWM, 0);
-    analogWrite(BL_PWM, 0);
-    analogWrite(BR_PWM, 0);
-  }
-}
-
 void stop()
 {
   analogWrite(FL_PWM, 0);
@@ -317,27 +254,27 @@ void setup()
   sensor_t sensor;
 
   bno.getSensor(&sensor);
-  if (bnoID != sensor.sensor_id)
-  {
-    DEBUG.println("\nNo Calibration Data for this sensor exists in EEPROM");
-    delay(500);
-  }
-  else
-  {
-    DEBUG.println("\nFound Calibration for this sensor in EEPROM.");
-    eeAddress += sizeof(long);
-    EEPROM.get(eeAddress, calibrationData);
+  // if (bnoID != sensor.sensor_id)
+  // {
+  //   DEBUG.println("\nNo Calibration Data for this sensor exists in EEPROM");
+  //   delay(500);
+  // }
+  // else
+  // {
+  //   DEBUG.println("\nFound Calibration for this sensor in EEPROM.");
+  //   eeAddress += sizeof(long);
+  //   EEPROM.get(eeAddress, calibrationData);
 
-    displaySensorOffsets(calibrationData);
+  //   displaySensorOffsets(calibrationData);
 
-    DEBUG.println("\n\nRestoring Calibration data to the BNO055...");
-    bno.setSensorOffsets(calibrationData);
+  //   DEBUG.println("\n\nRestoring Calibration data to the BNO055...");
+  //   bno.setSensorOffsets(calibrationData);
 
-    DEBUG.println("\n\nCalibration data loaded into BNO055");
-    foundCalib = true;
-  }
+  //   DEBUG.println("\n\nCalibration data loaded into BNO055");
+  //   foundCalib = true;
+  // }
 
-  bno.setExtCrystalUse(true);
+  bno.setExtCrystalUse(false);
 
   // Motor Pins
   pinMode(FL_PWM, OUTPUT);
@@ -356,28 +293,42 @@ void setup()
 
 void loop()
 {
-
+  // calculateRobotAngle();
+  // printAllIMUData();
+  // movement.angle = 0;
+  // movement.speed = 0;
+  // movement.angularVelocity = correction;
   // drive();
-  getLightData();
-  // else
-  // {
-  //   getIRData();
-  //   if (balldata.strength != 400)
-  //   {
-  //     // move to ball
-  //     calculateOrbit();
-  //     drive();
-  //   }
-  // }
 
-  // getIRData();
-  // if (balldata.strength != 400)
-  // {
-  //   // move to ball
-  //   calculateOrbit();
-  //   drive();
-  // }
+  // move to ball
+
+  calculateRobotAngle();
+  getIRData();
+  calculateOrbit();
+  movement.speed = 255;
+  drive();
+  DEBUG.println(balldata.angle);
 }
+
+// drive();
+// getLightData();
+// else
+// {
+//   getIRData();
+//   if (balldata.strength != 400)
+//   {
+//     // move to ball
+//     calculateOrbit();
+//     drive();
+//   }
+// }
+// getIRData();
+// if (balldata.strength != 400)
+// {
+//   // move to ball
+//   calculateOrbit();
+//   drive();
+// }
 
 // read all sensors
 // getLightData();

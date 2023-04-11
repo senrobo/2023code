@@ -43,15 +43,16 @@ float offsetAngle;
 #define SIN45 0.70710678118654752440084436210485F
 
 // Should ideally be <=1.0F to preserve resolution
-#define ANGULAR_VELOCITY_MULTIPLIER 0.25F
-#define DRIVE_STALL_SPEED (int16_t)50
+
+#define DRIVE_STALL_SPEED (int16_t)20
 #define DRIVE_MAX_SPEED (int16_t)100
 
 #define BALL_MOVEMENT_A 1e-4F
 #define BALL_MOVEMENT_B 10.0F
 
-#define IMUKP 0.1
-#define IMUKD 1
+#define IMUKP 2
+#define IMUKI 0.02
+#define IMUKD 20
 #define MATH_E 2.7182818284590452353602874713527
 
 int FLSpeed, FRSpeed, BLSpeed, BRSpeed = 0;
