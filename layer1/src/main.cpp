@@ -164,30 +164,35 @@ void loop()
       chordLength = 2 - chordLength;
     }
   }
+  if (onLine)
+  {
+    int moveAngle = fmod(lineAngle + 180, 360);
+    lastLineAngle = lineAngle;
+    lastChordLength = chordLength;
+  }
+// put your main code here, to run repeatedly:
+// updateSensors();
 
-  // put your main code here, to run repeatedly:
-  // updateSensors();
-
-  // for (int i = 0; i < 16; i++)
-  // {
-  //   TeensySerial.print(i);
-  //   TeensySerial.print(" | ");
-  //   TeensySerial.print(lightVals[i]);
-  //   TeensySerial.print(" | ");
-  // }
-  // TeensySerial.println();
-  // Print TH Values
-  // for (int i = 0; i < 30; i++)
-  // {
-  //   TeensySerial.print(i);
-  //   TeensySerial.print(" | ");
-  //   TeensySerial.print(minVals[i]);
-  //   TeensySerial.print(" | ");
-  //   TeensySerial.print(maxVals[i]);
-  //   TeensySerial.print(" | ");
-  //   TeensySerial.print(lightThresh[i]);
-  //   TeensySerial.print(" | ");
-  // }
-  // TeensySerial.println();
-  // calibrate();
+// for (int i = 0; i < 16; i++)
+// {
+//   TeensySerial.print(i);
+//   TeensySerial.print(" | ");
+//   TeensySerial.print(lightVals[i]);
+//   TeensySerial.print(" | ");
+// }
+// TeensySerial.println();
+// Print TH Values
+// for (int i = 0; i < 30; i++)
+// {
+//   TeensySerial.print(i);
+//   TeensySerial.print(" | ");
+//   TeensySerial.print(minVals[i]);
+//   TeensySerial.print(" | ");
+//   TeensySerial.print(maxVals[i]);
+//   TeensySerial.print(" | ");
+//   TeensySerial.print(lightThresh[i]);
+//   TeensySerial.print(" | ");
+// }
+// TeensySerial.println();
+// calibrate();
 }
