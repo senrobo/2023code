@@ -2,38 +2,6 @@
 
 #include "main.h"
 
-void setup()
-{
-  // put your setup code here, to run once:
-  TeensySerial.begin(115200); // Teensy
-
-  pinMode(led, OUTPUT);
-  digitalWrite(led, HIGH);
-
-  pinMode(mux1, INPUT);
-  pinMode(PB7, INPUT);
-
-  // if want to use digitalWriteFast us pinMode(pinNametoDigitalPin(PINNAME), OUTPUT/INPUT))
-  pinMode(m1s0, OUTPUT);
-  pinMode(m1s1, OUTPUT);
-  pinMode(m1s2, OUTPUT);
-  pinMode(m1s3, OUTPUT);
-
-  pinMode(m2s0, OUTPUT);
-  pinMode(m2s1, OUTPUT);
-  pinMode(m2s2, OUTPUT);
-  pinMode(m2s3, OUTPUT);
-
-  digitalWrite(m1s0, LOW);
-  digitalWrite(m1s1, LOW);
-  digitalWrite(m1s2, LOW);
-  digitalWrite(m1s3, LOW);
-  digitalWrite(m2s0, LOW);
-  digitalWrite(m2s1, LOW);
-  digitalWrite(m2s2, LOW);
-  digitalWrite(m2s3, LOW);
-}
-
 // Light Stuff
 
 void updateSensors()
@@ -43,23 +11,15 @@ void updateSensors()
     int idx = lightCnt;
     lightVals[idx] = analogRead(mux1);
 
-    // if (lightVals[idx] > fixedThreshFirstBot[idx])
-    // {
-    //   lineDetected[outSensors] = idx;
-    //   outSensors++;
-    // }
+    lightVals[idx] > fixedThreshFirstBot[idx] ? (lineDetected[outSensors] = idx, outSensors++) : 0;
 
     lightCnt++;
     lightCnt %= 16;
 
-    idx = lightCnt + 16;
+    idx = lightCnt + 18;
     lightVals[idx] = analogRead(mux2);
 
-    // if (lightVals[idx] > fixedThreshFirstBot[idx])
-    // {
-    //   lineDetected[outSensors] = idx;
-    //   outSensors++;
-    // }
+    lightVals[idx] > fixedThreshFirstBot[idx] ? (lineDetected[outSensors] = idx, outSensors++) : 0;
 
     digitalWrite(m1s0, muxChannel[lightCnt][0]);
     digitalWrite(m1s1, muxChannel[lightCnt][1]);
@@ -71,6 +31,57 @@ void updateSensors()
     digitalWrite(m2s3, muxChannel[lightCnt][3]);
 
     readTimer = micros();
+  }
+}
+
+void processLightData()
+{
+  float vecX = 0;
+  float vecY = 0;
+  clusterStart = 0;
+  clusterEnd = 0;
+  float largestDiff = 0;
+  bool previouslyOnLine = onLine;
+  float closestAngle = 0;
+  onLine = outSensors > 0;
+  if (onLine)
+  {
+    if (outSensors != 0)
+    {
+      for (int i = 0; i < outSensors; i++)
+      {
+        for (int j = 1; j < outSensors; j++)
+        {
+          int tmpDiff = angleDiff(lineDetected[i] * ldrAngle, lineDetected[j] * ldrAngle);
+          if (tmpDiff > largestDiff)
+          {
+            clusterStart = lineDetected[i] * ldrAngle;
+            clusterEnd = lineDetected[j] * ldrAngle;
+            largestDiff = tmpDiff;
+          }
+        }
+      }
+
+      float chordLength = angleDiff(clusterStart, clusterEnd) / 180;
+      float lineAngle = angleBetween(clusterStart, clusterEnd) <= 180 ? midAngleBetween(clusterStart, clusterEnd) : midAngleBetween(clusterEnd, clusterStart);
+    }
+    else
+    {
+      bool onLine = false;
+    }
+    outSensors = 0;
+
+    // update data
+    onLine = onLine;
+    lineAngle = lineAngle;
+    chordLength = chordLength;
+
+    // save inital line angle
+    if (onLine && !previouslyOnLine)
+    {
+      initialLineAngle = lineAngle;
+    }
+    lineTrackAngle = closestAngle;
   }
 }
 
@@ -106,38 +117,54 @@ void calibrate()
     }
     TeensySerial.println();
   }
-  // Print TH Values
 }
-// void processLightData()
-// {
-//   if (outSensors != 0)
-//   {
-//     for (int i = 0; i < outSensors; i++)
-//     {
-//       for (int j = 1; j < outSensors; j++)
-//       {
-//         int tmpDiff = angleDiff(lineDetected[i] * ldrAngle, lineDetected[j] * ldrAngle);
-//         if (tmpDiff > largestDiff)
-//         {
-//           clusterStart = lineDetected[i] * ldrAngle;
-//           clusterEnd = lineDetected[j] * ldrAngle;
-//           largestDiff = tmpDiff;
-//         }
-//       }
-//     }
 
-//     float chordLength = angleDiff(clusterStart, clusterEnd) / 180;
-//     float lineAngle = angleBetween(clusterStart, clusterEnd) <= 180 ? midAngleBetween(clusterStart, clusterEnd) : midAngleBetween(clusterEnd, clusterStart);
-//   }
-//   else
-//   {
-//     bool onLine = false;
-//   }
-//   outSensors = 0;
-// }
+void setup()
+{
+  // put your setup code here, to run once:
+  TeensySerial.begin(115200); // Teensy
+
+  pinMode(led, OUTPUT);
+  digitalWrite(led, HIGH);
+
+  pinMode(mux1, INPUT);
+  pinMode(PB7, INPUT);
+
+  // if want to use digitalWriteFast us pinMode(pinNametoDigitalPin(PINNAME), OUTPUT/INPUT))
+  pinMode(m1s0, OUTPUT);
+  pinMode(m1s1, OUTPUT);
+  pinMode(m1s2, OUTPUT);
+  pinMode(m1s3, OUTPUT);
+
+  pinMode(m2s0, OUTPUT);
+  pinMode(m2s1, OUTPUT);
+  pinMode(m2s2, OUTPUT);
+  pinMode(m2s3, OUTPUT);
+
+  digitalWrite(m1s0, LOW);
+  digitalWrite(m1s1, LOW);
+  digitalWrite(m1s2, LOW);
+  digitalWrite(m1s3, LOW);
+  digitalWrite(m2s0, LOW);
+  digitalWrite(m2s1, LOW);
+  digitalWrite(m2s2, LOW);
+  digitalWrite(m2s3, LOW);
+}
 
 void loop()
 {
+  updateSensors();
+  processLightData();
+  if (onLine)
+  {
+    double lastTimeOut = millis();
+    if (lastLineAngle >= 0 && abs(lastLineAngle - lineAngle) >= 90)
+    {
+      lineAngle = lastLineAngle;
+      chordLength = 2 - chordLength;
+    }
+  }
+
   // put your main code here, to run repeatedly:
   // updateSensors();
 
@@ -162,5 +189,5 @@ void loop()
   //   TeensySerial.print(" | ");
   // }
   // TeensySerial.println();
-  calibrate();
+  // calibrate();
 }
