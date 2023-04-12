@@ -45,16 +45,22 @@ float offsetAngle;
 // Should ideally be <=1.0F to preserve resolution
 
 #define DRIVE_STALL_SPEED (int16_t)20
-#define DRIVE_MAX_SPEED (int16_t)100
+#define DRIVE_MIN_SPEED (int16_t)40
+#define DRIVE_MAX_SPEED (int16_t)200
 
 #define BALL_MOVEMENT_A 1e-4F
 #define BALL_MOVEMENT_B 10.0F
 
-#define IMUKP 2
-#define IMUKI 0.02
-#define IMUKD 20
+int movementStrengthAngleOld = 0;
+
+#define IMUKP 0.5
+#define IMUKI 0.01
+#define IMUKD 5
 #define MATH_E 2.7182818284590452353602874713527
 
-int FLSpeed, FRSpeed, BLSpeed, BRSpeed = 0;
+int FLSpeed,
+    FRSpeed, BLSpeed, BRSpeed = 0;
+
+#define BNO055_SAMPLERATE_DELAY_MS (100)
 
 #endif

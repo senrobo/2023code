@@ -1,8 +1,9 @@
 #include "main.h"
+#include "misc.cpp"
+#include "imu.cpp"
+// #include "calibrate.cpp"
 
-Adafruit_BNO055 bno = Adafruit_BNO055(55);
-
-#define BNO055_SAMPLERATE_DELAY_MS (100)
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x29); // For purple
 
 float deg2rad(float angle)
 {
@@ -22,69 +23,67 @@ struct ballData
   int strength = 0;
 } balldata;
 
-int mod(int x, int m)
-{
-  int r = x % m;
-  return r < 0 ? r + m : r;
-}
-
-double angleBetween(double angleCounterClockwise, double angleClockwise)
-{
-  return mod(angleClockwise - angleCounterClockwise, 360);
-}
-
-double smallestAngleBetween(double angle1, double angle2)
-{
-  double ang = angleBetween(angle1, angle2);
-  return fmin(ang, 360 - ang);
-}
-
-int sign(int value)
-{
-  return value >= 0 ? 1 : -1;
-}
-
-int sign(double value)
-{
-  return value >= 0 ? 1 : -1;
-}
-
 // IMU Stuff
 
-void printAllIMUData()
+void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
 {
-  sensors_event_t eul, gyr, lac, mag, acc, gra;
-  bno.getEvent(&eul, Adafruit_BNO055::VECTOR_EULER);
-  bno.getEvent(&gyr, Adafruit_BNO055::VECTOR_GYROSCOPE);
-  bno.getEvent(&acc, Adafruit_BNO055::VECTOR_ACCELEROMETER);
-  bno.getEvent(&lac, Adafruit_BNO055::VECTOR_LINEARACCEL);
-  bno.getEvent(&gra, Adafruit_BNO055::VECTOR_GRAVITY);
-  bno.getEvent(&mag, Adafruit_BNO055::VECTOR_MAGNETOMETER);
+  DEBUG.print("Accelerometer: ");
+  DEBUG.print(calibData.accel_offset_x);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.accel_offset_y);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.accel_offset_z);
+  DEBUG.print(" ");
 
-  // Get calibration states
-  uint8_t systemCalib, gyroCalib, accCalib, magCalib;
-  bno.getCalibration(&systemCalib, &gyroCalib, &accCalib, &magCalib);
+  DEBUG.print("\nGyro: ");
+  DEBUG.print(calibData.gyro_offset_x);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.gyro_offset_y);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.gyro_offset_z);
+  DEBUG.print(" ");
 
-  // Print everything to serial
-  const auto printVector = [](const char *name, const sensors_vec_t &vector)
+  DEBUG.print("\nMag: ");
+  DEBUG.print(calibData.mag_offset_x);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.mag_offset_y);
+  DEBUG.print(" ");
+  DEBUG.print(calibData.mag_offset_z);
+  DEBUG.print(" ");
+
+  DEBUG.print("\nAccel Radius: ");
+  DEBUG.print(calibData.accel_radius);
+
+  DEBUG.print("\nMag Radius: ");
+  DEBUG.print(calibData.mag_radius);
+  delay(BNO055_SAMPLERATE_DELAY_MS);
+}
+
+void displayCalStatus(void)
+{
+  /* Get the four calibration values (0..3) */
+  /* Any sensor data reporting 0 should be ignored, */
+  /* 3 means 'fully calibrated" */
+  uint8_t system, gyro, accel, mag;
+  system = gyro = accel = mag = 0;
+  bno.getCalibration(&system, &gyro, &accel, &mag);
+
+  /* The data should be ignored until the system calibration is > 0 */
+  Serial.print("\t");
+  if (!system)
   {
-    DEBUG.printf(
-        "%s: x = %4d.%02d y = %4d.%02d z = %4d.%02d\n", name,
-        (int16_t)vector.x, abs((int32_t)(vector.x * 100) % 100),
-        (int16_t)vector.y, abs((int32_t)(vector.y * 100) % 100),
-        (int16_t)vector.z, abs((int32_t)(vector.z * 100) % 100));
-  };
-  printVector("Euler Angle (º)            ", eul.orientation);
-  printVector("Angular Velocity (rad s⁻¹) ", gyr.gyro);
-  printVector("Acceleration (m s⁻²)       ", acc.acceleration);
-  printVector("Linear Acceleration (m s⁻²)", lac.acceleration);
-  printVector("Gravity (m s⁻²)            ", gra.acceleration);
-  printVector("Magnetic Field (μT)        ", mag.magnetic);
+    Serial.print("! ");
+  }
 
-  DEBUG.printf(
-      "Calibration: System = %d Gyroscope = %d Accelerometer = %d "
-      "Magnetometer = %d\n\n",
-      systemCalib, gyroCalib, accCalib, magCalib);
+  /* Display the individual values */
+  DEBUG.print("Sys:");
+  DEBUG.print(system, DEC);
+  DEBUG.print(" G:");
+  DEBUG.print(gyro, DEC);
+  DEBUG.print(" A:");
+  DEBUG.print(accel, DEC);
+  DEBUG.print(" M:");
+  DEBUG.println(mag, DEC);
 }
 
 void calculateRobotAngle()
@@ -99,6 +98,7 @@ void calculateRobotAngle()
   int correctionKD = (error - lastError) * IMUKD;
   correction = correctionKP + correctionKI + correctionKD;
   lastError = error;
+  // DEBUG.println(robotBearing);
 }
 
 void drive()
@@ -133,47 +133,10 @@ void drive()
   digitalWriteFast(BL_DIR, BLSpeed > 0 ? LOW : HIGH);
   digitalWriteFast(BR_DIR, BRSpeed > 0 ? HIGH : LOW);
 
-  analogWrite(FL_PWM,
-              constrain(abs(FLSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
-  analogWrite(FR_PWM,
-              constrain(abs(FRSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
-  analogWrite(BL_PWM,
-              constrain(abs(BLSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
-  analogWrite(BR_PWM,
-              constrain(abs(BRSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
-}
-
-void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
-{
-  DEBUG.print("Accelerometer: ");
-  DEBUG.print(calibData.accel_offset_x);
-  DEBUG.print(" ");
-  DEBUG.print(calibData.accel_offset_y);
-  DEBUG.print(" ");
-  DEBUG.print(calibData.accel_offset_z);
-  DEBUG.print(" ");
-
-  DEBUG.print("\nGyro: ");
-  DEBUG.print(calibData.gyro_offset_x);
-  DEBUG.print(" ");
-  DEBUG.print(calibData.gyro_offset_y);
-  DEBUG.print(" ");
-  DEBUG.print(calibData.gyro_offset_z);
-  DEBUG.print(" ");
-
-  DEBUG.print("\nMag: ");
-  DEBUG.print(calibData.mag_offset_x);
-  DEBUG.print(" ");
-  DEBUG.print(calibData.mag_offset_y);
-  DEBUG.print(" ");
-  DEBUG.print(calibData.mag_offset_z);
-  DEBUG.print(" ");
-
-  DEBUG.print("\nAccel Radius: ");
-  DEBUG.print(calibData.accel_radius);
-
-  DEBUG.print("\nMag Radius: ");
-  DEBUG.print(calibData.mag_radius);
+  analogWrite(FL_PWM, constrain(abs(FLSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
+  analogWrite(FR_PWM, constrain(abs(FRSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
+  analogWrite(BL_PWM, constrain(abs(BLSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
+  analogWrite(BR_PWM, constrain(abs(BRSpeed), DRIVE_STALL_SPEED, DRIVE_MAX_SPEED));
 }
 
 void getIRData()
@@ -222,12 +185,18 @@ void calculateOrbit()
   // Add on an angle to the ball angle depending on the ball's angle. Exponential function
   double ballAngleDifference = -sign(balldata.angle - 180) * fmin(90, 0.4 * pow(MATH_E, 0.15 * (double)smallestAngleBetween(balldata.angle, 0)));
 
+  double movementStrengthAngle = balldata.strength * 0.5 + movementStrengthAngleOld * 0.5;
   // Multiply the addition by distance. The further the ball, the more the robot moves towards the ball. Also an exponential function //0.02,4.5
-  double distanceMultiplier = constrain(0.2 * balldata.strength * pow(MATH_E, 10 * balldata.strength), 0, 1);
+  double distanceMultiplier = constrain(0.0002 * movementStrengthAngle * pow(MATH_E, 1000 * movementStrengthAngle), 0, 1);
   double angleAddition = ballAngleDifference * distanceMultiplier;
 
   movement.angle = mod(balldata.angle + angleAddition, 360);
-  movement.speed = 40 + (double)(50 - 40) * (1.0 - (double)abs(angleAddition) / 90.0);
+  movement.speed = DRIVE_MIN_SPEED + (double)(DRIVE_MAX_SPEED - DRIVE_MIN_SPEED) * (1.0 - (double)abs(angleAddition) / 90.0);
+
+  movementStrengthAngle = movementStrengthAngleOld;
+
+  DEBUG.println(movementStrengthAngle);
+  DEBUG.println(balldata.strength);
 }
 
 void setup()
@@ -241,7 +210,7 @@ void setup()
   Wire.begin();
   bno.begin();
   delay(1000);
-  bno.setMode(OPERATION_MODE_IMUPLUS);
+  // bno.setMode(OPERATION_MODE_IMUPLUS);
 
   int eeAddress = 0;
   long bnoID;
@@ -254,25 +223,25 @@ void setup()
   sensor_t sensor;
 
   bno.getSensor(&sensor);
-  // if (bnoID != sensor.sensor_id)
-  // {
-  //   DEBUG.println("\nNo Calibration Data for this sensor exists in EEPROM");
-  //   delay(500);
-  // }
-  // else
-  // {
-  //   DEBUG.println("\nFound Calibration for this sensor in EEPROM.");
-  //   eeAddress += sizeof(long);
-  //   EEPROM.get(eeAddress, calibrationData);
+  if (bnoID != sensor.sensor_id)
+  {
+    DEBUG.println("\nNo Calibration Data for this sensor exists in EEPROM");
+    delay(500);
+  }
+  else
+  {
+    DEBUG.println("\nFound Calibration for this sensor in EEPROM.");
+    eeAddress += sizeof(long);
+    EEPROM.get(eeAddress, calibrationData);
 
-  //   displaySensorOffsets(calibrationData);
+    displaySensorOffsets(calibrationData);
 
-  //   DEBUG.println("\n\nRestoring Calibration data to the BNO055...");
-  //   bno.setSensorOffsets(calibrationData);
+    DEBUG.println("\n\nRestoring Calibration data to the BNO055...");
+    bno.setSensorOffsets(calibrationData);
 
-  //   DEBUG.println("\n\nCalibration data loaded into BNO055");
-  //   foundCalib = true;
-  // }
+    DEBUG.println("\n\nCalibration data loaded into BNO055");
+    foundCalib = true;
+  }
 
   bno.setExtCrystalUse(false);
 
@@ -293,21 +262,21 @@ void setup()
 
 void loop()
 {
-  // calculateRobotAngle();
-  // printAllIMUData();
-  // movement.angle = 0;
-  // movement.speed = 0;
-  // movement.angularVelocity = correction;
-  // drive();
-
-  // move to ball
-
   calculateRobotAngle();
-  getIRData();
-  calculateOrbit();
-  movement.speed = 255;
-  drive();
-  DEBUG.println(balldata.angle);
+  if (abs(correction) > 2)
+  {
+    movement.angle = 0;
+    movement.speed = 0;
+    movement.angularVelocity = correction;
+    drive();
+  }
+  else
+  {
+    movement.angularVelocity = 0;
+    getIRData();
+    calculateOrbit();
+    drive();
+  }
 }
 
 // drive();
