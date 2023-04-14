@@ -9,109 +9,10 @@ void updateSensors()
   if (micros() - readTimer >= 100)
   {
     int idx = lightCnt;
-    lightVals[lightCnt] = analogRead(mux1);
-    for (int i = 0; i < 16; i++)
-    {
-      if (lightVals[idx] > sciCenterThresh[idx])
-      {
-        outSensors++;
-        for (int i = 0; i < outSensors; i++)
-        {
-          if (lineDetected[i] == idx)
-          {
-            outSensors--;
-          }
-          else
-          {
-            lineDetected[outSensors] = idx;
-          }
-        }
-      }
+    lightVals[idx] = analogRead(mux1);
 
-      int idx2 = lightCnt;
-      lightVals[lightCnt] = analogRead(mux1);
-      for (int i = 0; i < 16; i++)
-      {
-        if (lightVals[idx] > sciCenterThresh[idx])
-        {
-          outSensors++;
-          for (int i = 0; i < outSensors; i++)
-          {
-            if (lineDetected[i] == idx)
-            {
-              outSensors--;
-            }
-            else
-            {
-              lineDetected[outSensors] = idx;
-            }
-          }
-        }
-      }
-    // int idx = lightCnt;
-    // lightVals[idx] = analogRead(mux1);
-
-    // if (lightVals[idx] > sciCenterThresh[idx])
-    // {
-    //   outSensors++;
-    //   for (int i = 0; i < outSensors; i++)
-    //   {
-    //     if (lineDetected[i] == idx)
-    //     {
-    //       outSensors--;
-    //     }
-    //     else
-    //     {
-    //       lineDetected[outSensors] = idx;
-    //     }
-    //   }
-    // }
-    // // if (lightVals[idx] > fixedThreshFirstBot[idx])
-    // // {
-    // //   outSensors++;
-    // //   for (int i = 0; i < outSensors; i++)
-    // //   {
-    // //     if (lineDetected[i] == idx)
-    // //     {
-    // //       outSensors--;
-    // //     }
-    // //     else
-    // //     {
-    // //       lineDetected[outSensors] = idx;
-    // //     }
-    // //   }
-    // // }
-    // // if (lightVals[idx] > lightThresh[idx])
-    // // {
-    // //   lineDetected[outSensors] = lightCnt;
-    // //   outSensors++;
-    // // }
-
-    // idx = lightCnt + 16;
-
-    // lightVals[idx] = analogRead(mux2);
-
-    // if (lightVals[idx] > sciCenterThresh[idx])
-    // {
-    //   outSensors++;
-    //   for (int i = 0; i < outSensors; i++)
-    //   {
-    //     if (lineDetected[i] == idx)
-    //     {
-    //       outSensors--;
-    //     }
-    //     else
-    //     {
-    //       lineDetected[outSensors] = idx;
-    //     }
-    //   }
-    // }
-
-    // if (lightVals[idx] > lightThresh[idx])
-    // {
-    //   lineDetected[outSensors] = lightCnt;
-    //   outSensors++;
-    // }
+    idx = lightCnt + 16;
+    lightVals[idx] = analogRead(mux2);
 
     lightCnt++;
     lightCnt %= 16;
@@ -126,66 +27,12 @@ void updateSensors()
     digitalWrite(m2s3, muxChannelTwo[lightCnt][3]);
 
     readTimer = micros();
-
-    TeensySerial.print("light out");
-    for (int i = 0; i < outSensors; i++)
-    {
-      TeensySerial.print(lineDetected[i]);
-      TeensySerial.print(" ");
-    }
-    TeensySerial.println();
   }
 }
 
-void processLightData()
+void clearArray(int array[], int size)
 {
-  float vecX = 0;
-  float vecY = 0;
-  clusterStart = 0;
-  clusterEnd = 0;
-  float largestDiff = 0;
-  bool previouslyOnLine = onLine;
-  float closestAngle = 0;
-  onLine = outSensors > 0;
-  if (onLine)
-  {
-    if (outSensors != 0)
-    {
-      for (int i = 0; i < outSensors; i++)
-      {
-        for (int j = 1; j < outSensors; j++)
-        {
-          int tmpDiff = angleDiff(lineDetected[i] * ldrAngle, lineDetected[j] * ldrAngle);
-          if (tmpDiff > largestDiff)
-          {
-            clusterStart = lineDetected[i] * ldrAngle;
-            clusterEnd = lineDetected[j] * ldrAngle;
-            largestDiff = tmpDiff;
-          }
-        }
-      }
-
-      float chordLength = angleDiff(clusterStart, clusterEnd) / 180;
-      float lineAngle = angleBetween(clusterStart, clusterEnd) <= 180 ? midAngleBetween(clusterStart, clusterEnd) : midAngleBetween(clusterEnd, clusterStart);
-    }
-    else
-    {
-      bool onLine = false;
-    }
-    outSensors = 0;
-
-    // update data
-    onLine = onLine;
-    lineAngle = lineAngle;
-    chordLength = chordLength;
-
-    // save inital line angle
-    if (onLine && !previouslyOnLine)
-    {
-      initialLineAngle = lineAngle;
-    }
-    lineTrackAngle = closestAngle;
-  }
+  memset(array, 0, size * sizeof(int));
 }
 
 void calibrate()
@@ -215,8 +62,8 @@ void calibrate()
     {
       // TeensySerial.print(i);
       // TeensySerial.print(" | ");
-      TeensySerial.print(lightThresh[i]);
-      TeensySerial.print(" , ");
+      // TeensySerial.print(lightThresh[i]);
+      // TeensySerial.print(" , ");
       // TeensySerial.print(lightVals[i]);
       // TeensySerial.print(" , ");
       // TeensySerial.print(maxVals[i]);
@@ -224,7 +71,18 @@ void calibrate()
       // TeensySerial.print(minVals[i]);
       // TeensySerial.print(" | ");
     }
-    TeensySerial.println();
+    // TeensySerial.println();
+  }
+}
+
+void printAllValues()
+{
+  for (int i = 0; i < 30; i++)
+  {
+    // TeensySerial.print(i);
+    // TeensySerial.print(" | ");
+    // TeensySerial.print(lightVals[i]);
+    // TeensySerial.print(" , ");
   }
 }
 
@@ -263,52 +121,104 @@ void setup()
 void loop()
 {
   updateSensors();
-  // calibrate();
+  // loop through ligthVals to find for the sensors that are out of the TH Values
+  for (int i = 0; i < 30; i++)
+  {
+    if (lightVals[i] > fixedThreshFirstBot[i])
+    {
+      outSensors++;
+      for (int j = 0; j < outSensors; j++)
+      {
+        if (lineDetected[j] == i)
+        {
+          outSensors--;
+          break;
+        }
+        else
+        {
+          lineDetected[outSensors] = i;
+          onLine = true;
+        }
+      }
+    }
+  }
 
-  // for (int i = 0; i < 30; i++)
+  if (onLine)
+  {
+    for (int i = 1; i < outSensors; i++)
+    {
+      for (int j = 2; j < outSensors; j++)
+      {
+        float tmpDiff = angleDiff(lineDetected[i] * 12, lineDetected[j] * 12);
+        if (tmpDiff > largestDiff)
+        {
+          clusterStart = lineDetected[i] * 12;
+          clusterEnd = lineDetected[j] * 12;
+          largestDiff = tmpDiff;
+        }
+      }
+    }
+    chordLength = angleDiff(clusterStart, clusterEnd) / 180;
+    lineAngle = angleBetween(clusterStart, clusterEnd) <= 180 ? midAngleBetween(clusterStart, clusterEnd) : midAngleBetween(clusterEnd, clusterStart);
+  }
+  for (int i = 0; i < outSensors; i++)
+  {
+    TeensySerial.print(lineDetected[i]);
+    TeensySerial.print(" , ");
+  }
+  outSensors = 0;
+  if (onLine)
+  {
+    lastOutTime = millis();
+    if (lastLineAngle >= 0 &&
+        abs(lastLineAngle - lineAngle) >= 90)
+    {
+      // prevent line angle from changing
+      lineAngle = lastLineAngle;
+      // allow chord length to keep increasing as robot goes over centre of line
+      chordLength = 2 - chordLength;
+    }
+  }
+  // else
   // {
-  //   // TeensySerial.print(i);
-  //   // TeensySerial.print(" | ");
-  //   TeensySerial.print(lightVals[i]);
-  //   TeensySerial.print(" , ");
+  //   if (prevLine && lastChordLength > 1 &&
+  //       (millis() - lastOutTime < 100) && (millis() - lastInTime > 300))
+  //   {
+  //     // previously on line, now out of field
+  //     onLine = true;
+  //     chordLength = 2;
+  //     lineAngle = lastLineAngle;
+  //   }
   // }
-  // TeensySerial.println();
-  // processLightData();
+
   // if (onLine)
   // {
-  //   double lastTimeOut = millis();
-  //   if (lastLineAngle >= 0 && abs(lastLineAngle - lineAngle) >= 90)
-  //   {
-  //     lineAngle = lastLineAngle;
-  //     chordLength = 2 - chordLength;
-  //   }
-  //   int moveAngle = fmod(lineAngle + 180, 360);
+  //   float moveAngle = fmod(lineAngle + 180, 360);
   //   lastLineAngle = lineAngle;
   //   lastChordLength = chordLength;
   // }
-  // put your main code here, to run repeatedly:
-  // updateSensors();
+  // else
+  // {
+  //   lastInTime = millis();
+  //   if (millis() - lastOutTime > 1000)
+  //   {
+  //     // reset last line angle
+  //     lastLineAngle = 0;
+  //     lastChordLength = 0;
+  //   }
+  // }
+  // prevLine = onLine;
+  TeensySerial.print("Cluter Start: ");
+  TeensySerial.print(clusterStart);
+  TeensySerial.print(" , ");
+  TeensySerial.print("Cluter End: ");
+  TeensySerial.print(clusterEnd);
+  TeensySerial.print(" , ");
+  TeensySerial.print("Line Angle: ");
+  TeensySerial.print(lineAngle);
+  TeensySerial.print(" , ");
+  TeensySerial.print("Chord Length: ");
+  TeensySerial.println(chordLength);
 
-  // for (int i = 0; i < 16; i++)
-  // {
-  //   TeensySerial.print(i);
-  //   TeensySerial.print(" | ");
-  //   TeensySerial.print(lightVals[i]);
-  //   TeensySerial.print(" | ");
-  // }
-  // TeensySerial.println();
-  // Print TH Values
-  // for (int i = 0; i < 30; i++)
-  // {
-  //   TeensySerial.print(i);
-  //   TeensySerial.print(" | ");
-  //   TeensySerial.print(minVals[i]);
-  //   TeensySerial.print(" | ");
-  //   TeensySerial.print(maxVals[i]);
-  //   TeensySerial.print(" | ");
-  //   TeensySerial.print(lightThresh[i]);
-  //   TeensySerial.print(" | ");
-  // }
-  // TeensySerial.println();
-  // calibrate();
+  largestDiff = 0;
 }
