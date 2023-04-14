@@ -20,7 +20,7 @@
 #define BR_DIR 10
 #define BL_PWM 11
 #define BL_DIR 12
-#define BALL_DETECT 18
+#define BALL_DETECT 20
 #define DRIBBLER_PWM 19
 #define BUILTIN_LED 13
 // Serial Definitions
@@ -37,6 +37,9 @@ int correction = 0;
 bool ballCaptured, ballFound, kick = false;
 float offsetAngle;
 
+int correctionKP = 0;
+int correctionKI = 0;
+int correctionKD = 0;
 // Movement Config
 
 #define COS45 0.70710678118654752440084436210485F
@@ -46,16 +49,16 @@ float offsetAngle;
 
 #define DRIVE_STALL_SPEED (int16_t)20
 #define DRIVE_MIN_SPEED (int16_t)40
-#define DRIVE_MAX_SPEED (int16_t)200
+#define DRIVE_MAX_SPEED (int16_t)100
 
-#define BALL_MOVEMENT_A 1e-4F
+#define BALL_MOVEMENT_A 1e-4
 #define BALL_MOVEMENT_B 10.0F
 
 int movementStrengthAngleOld = 0;
 
-#define IMUKP 0.5
-#define IMUKI 0.01
-#define IMUKD 5
+#define IMUKP 1
+#define IMUKI 0.2
+#define IMUKD 20
 #define MATH_E 2.7182818284590452353602874713527
 
 int FLSpeed,

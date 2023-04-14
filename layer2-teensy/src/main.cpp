@@ -93,9 +93,9 @@ void calculateRobotAngle()
   int robotBearing = round(eulerAngles.orientation.x);
   int epoopoo = robotBearing <= 180 ? robotBearing : robotBearing - 360;
   int error = -epoopoo;
-  int correctionKP = error * IMUKP;
-  int correctionKI = (error + correctionKI) * IMUKI;
-  int correctionKD = (error - lastError) * IMUKD;
+  correctionKP = error * IMUKP;
+  correctionKI = (error + correctionKI) * IMUKI;
+  correctionKD = (error - lastError) * IMUKD;
   correction = correctionKP + correctionKI + correctionKD;
   lastError = error;
   // DEBUG.println(robotBearing);
@@ -141,24 +141,28 @@ void drive()
 
 void getIRData()
 {
-  // Loop through the IR_SERIAL buffer to find the sync byte
-  while (IR_SERIAL.available() >= 9U)
+  // // Loop through the IR_SERIAL buffer to find the sync byte
+  // while (IR_SERIAL.available() >= 9U)
+  // {
+  //   if (IR_SERIAL.read() == SYNC_BYTE)
+  //   {
+  //     // Subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
+  //     byte buf[8U];
+  //     IR_SERIAL.readBytes(buf, 8U);
+
+  //     // Copy the last 8 buffer bytes into the ballAngle and ballStrength variables
+  //     memcpy(&balldata.angle, buf, 4U);
+  //     memcpy(&balldata.strength, buf + 4U, 4U);
+
+  //     // // Print the buffer to serial with printf
+  //     // for (int i = 0; i < 8; ++i)
+  //     //   DEBUG.printf("%02x", buf[i]);
+  //     // DEBUG.print("\n ");
+  //   }
+  // }
+  while (IR_SERIAL.available() > 0)
   {
-    if (IR_SERIAL.read() == SYNC_BYTE)
-    {
-      // Subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
-      byte buf[8U];
-      IR_SERIAL.readBytes(buf, 8U);
-
-      // Copy the last 8 buffer bytes into the ballAngle and ballStrength variables
-      memcpy(&balldata.angle, buf, 4U);
-      memcpy(&balldata.strength, buf + 4U, 4U);
-
-      // // Print the buffer to serial with printf
-      // for (int i = 0; i < 8; ++i)
-      //   DEBUG.printf("%02x", buf[i]);
-      // DEBUG.print("\n ");
-    }
+    DEBUG.print(char(IR_SERIAL.read()));
   }
 }
 
@@ -182,21 +186,15 @@ void calculateOrbit()
 {
   // Orbit based on ball angle and strength
 
-  // Add on an angle to the ball angle depending on the ball's angle. Exponential function
+  // Add on an angle to the ball angle depending on the ball's angle. Exponential function 0.15
   double ballAngleDifference = -sign(balldata.angle - 180) * fmin(90, 0.4 * pow(MATH_E, 0.15 * (double)smallestAngleBetween(balldata.angle, 0)));
 
-  double movementStrengthAngle = balldata.strength * 0.5 + movementStrengthAngleOld * 0.5;
   // Multiply the addition by distance. The further the ball, the more the robot moves towards the ball. Also an exponential function //0.02,4.5
-  double distanceMultiplier = constrain(0.0002 * movementStrengthAngle * pow(MATH_E, 1000 * movementStrengthAngle), 0, 1);
+  double distanceMultiplier = constrain(1 * ballStrength * pow(MATH_E, 500 * ballStrength), 0, 1);
   double angleAddition = ballAngleDifference * distanceMultiplier;
 
   movement.angle = mod(balldata.angle + angleAddition, 360);
   movement.speed = DRIVE_MIN_SPEED + (double)(DRIVE_MAX_SPEED - DRIVE_MIN_SPEED) * (1.0 - (double)abs(angleAddition) / 90.0);
-
-  movementStrengthAngle = movementStrengthAngleOld;
-
-  DEBUG.println(movementStrengthAngle);
-  DEBUG.println(balldata.strength);
 }
 
 void setup()
@@ -262,21 +260,23 @@ void setup()
 
 void loop()
 {
-  calculateRobotAngle();
-  if (abs(correction) > 2)
-  {
-    movement.angle = 0;
-    movement.speed = 0;
-    movement.angularVelocity = correction;
-    drive();
-  }
-  else
-  {
-    movement.angularVelocity = 0;
-    getIRData();
-    calculateOrbit();
-    drive();
-  }
+  // calculateRobotAngle();
+  // if (abs(correction) > 5)
+  // {
+  //   movement.angle = 0;
+  //   movement.speed = 0;
+  //   movement.angularVelocity = correction;
+  //   drive();
+  // }
+  // else
+  // {
+  //   movement.angularVelocity = 0;
+  //   getIRData();
+  //   calculateOrbit();
+  //   drive();
+  // }
+  // getLightData();
+  getIRData();
 }
 
 // drive();

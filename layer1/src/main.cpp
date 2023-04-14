@@ -9,28 +9,131 @@ void updateSensors()
   if (micros() - readTimer >= 100)
   {
     int idx = lightCnt;
-    lightVals[idx] = analogRead(mux1);
+    lightVals[lightCnt] = analogRead(mux1);
+    for (int i = 0; i < 16; i++)
+    {
+      if (lightVals[idx] > sciCenterThresh[idx])
+      {
+        outSensors++;
+        for (int i = 0; i < outSensors; i++)
+        {
+          if (lineDetected[i] == idx)
+          {
+            outSensors--;
+          }
+          else
+          {
+            lineDetected[outSensors] = idx;
+          }
+        }
+      }
 
-    lightVals[idx] > fixedThreshFirstBot[idx] ? (lineDetected[outSensors] = idx, outSensors++) : 0;
+      int idx2 = lightCnt;
+      lightVals[lightCnt] = analogRead(mux1);
+      for (int i = 0; i < 16; i++)
+      {
+        if (lightVals[idx] > sciCenterThresh[idx])
+        {
+          outSensors++;
+          for (int i = 0; i < outSensors; i++)
+          {
+            if (lineDetected[i] == idx)
+            {
+              outSensors--;
+            }
+            else
+            {
+              lineDetected[outSensors] = idx;
+            }
+          }
+        }
+      }
+    // int idx = lightCnt;
+    // lightVals[idx] = analogRead(mux1);
+
+    // if (lightVals[idx] > sciCenterThresh[idx])
+    // {
+    //   outSensors++;
+    //   for (int i = 0; i < outSensors; i++)
+    //   {
+    //     if (lineDetected[i] == idx)
+    //     {
+    //       outSensors--;
+    //     }
+    //     else
+    //     {
+    //       lineDetected[outSensors] = idx;
+    //     }
+    //   }
+    // }
+    // // if (lightVals[idx] > fixedThreshFirstBot[idx])
+    // // {
+    // //   outSensors++;
+    // //   for (int i = 0; i < outSensors; i++)
+    // //   {
+    // //     if (lineDetected[i] == idx)
+    // //     {
+    // //       outSensors--;
+    // //     }
+    // //     else
+    // //     {
+    // //       lineDetected[outSensors] = idx;
+    // //     }
+    // //   }
+    // // }
+    // // if (lightVals[idx] > lightThresh[idx])
+    // // {
+    // //   lineDetected[outSensors] = lightCnt;
+    // //   outSensors++;
+    // // }
+
+    // idx = lightCnt + 16;
+
+    // lightVals[idx] = analogRead(mux2);
+
+    // if (lightVals[idx] > sciCenterThresh[idx])
+    // {
+    //   outSensors++;
+    //   for (int i = 0; i < outSensors; i++)
+    //   {
+    //     if (lineDetected[i] == idx)
+    //     {
+    //       outSensors--;
+    //     }
+    //     else
+    //     {
+    //       lineDetected[outSensors] = idx;
+    //     }
+    //   }
+    // }
+
+    // if (lightVals[idx] > lightThresh[idx])
+    // {
+    //   lineDetected[outSensors] = lightCnt;
+    //   outSensors++;
+    // }
 
     lightCnt++;
     lightCnt %= 16;
-
-    idx = lightCnt + 18;
-    lightVals[idx] = analogRead(mux2);
-
-    lightVals[idx] > fixedThreshFirstBot[idx] ? (lineDetected[outSensors] = idx, outSensors++) : 0;
 
     digitalWrite(m1s0, muxChannel[lightCnt][0]);
     digitalWrite(m1s1, muxChannel[lightCnt][1]);
     digitalWrite(m1s2, muxChannel[lightCnt][2]);
     digitalWrite(m1s3, muxChannel[lightCnt][3]);
-    digitalWrite(m2s0, muxChannel[lightCnt][0]);
-    digitalWrite(m2s1, muxChannel[lightCnt][1]);
-    digitalWrite(m2s2, muxChannel[lightCnt][2]);
-    digitalWrite(m2s3, muxChannel[lightCnt][3]);
+    digitalWrite(m2s0, muxChannelTwo[lightCnt][0]);
+    digitalWrite(m2s1, muxChannelTwo[lightCnt][1]);
+    digitalWrite(m2s2, muxChannelTwo[lightCnt][2]);
+    digitalWrite(m2s3, muxChannelTwo[lightCnt][3]);
 
     readTimer = micros();
+
+    TeensySerial.print("light out");
+    for (int i = 0; i < outSensors; i++)
+    {
+      TeensySerial.print(lineDetected[i]);
+      TeensySerial.print(" ");
+    }
+    TeensySerial.println();
   }
 }
 
@@ -110,10 +213,16 @@ void calibrate()
     }
     for (int i = 0; i < 30; i++)
     {
-      TeensySerial.print(i);
-      TeensySerial.print(" | ");
+      // TeensySerial.print(i);
+      // TeensySerial.print(" | ");
       TeensySerial.print(lightThresh[i]);
-      TeensySerial.print(" | ");
+      TeensySerial.print(" , ");
+      // TeensySerial.print(lightVals[i]);
+      // TeensySerial.print(" , ");
+      // TeensySerial.print(maxVals[i]);
+      // TeensySerial.print(" , ");
+      // TeensySerial.print(minVals[i]);
+      // TeensySerial.print(" | ");
     }
     TeensySerial.println();
   }
@@ -154,45 +263,52 @@ void setup()
 void loop()
 {
   updateSensors();
-  processLightData();
-  if (onLine)
-  {
-    double lastTimeOut = millis();
-    if (lastLineAngle >= 0 && abs(lastLineAngle - lineAngle) >= 90)
-    {
-      lineAngle = lastLineAngle;
-      chordLength = 2 - chordLength;
-    }
-  }
-  if (onLine)
-  {
-    int moveAngle = fmod(lineAngle + 180, 360);
-    lastLineAngle = lineAngle;
-    lastChordLength = chordLength;
-  }
-// put your main code here, to run repeatedly:
-// updateSensors();
+  // calibrate();
 
-// for (int i = 0; i < 16; i++)
-// {
-//   TeensySerial.print(i);
-//   TeensySerial.print(" | ");
-//   TeensySerial.print(lightVals[i]);
-//   TeensySerial.print(" | ");
-// }
-// TeensySerial.println();
-// Print TH Values
-// for (int i = 0; i < 30; i++)
-// {
-//   TeensySerial.print(i);
-//   TeensySerial.print(" | ");
-//   TeensySerial.print(minVals[i]);
-//   TeensySerial.print(" | ");
-//   TeensySerial.print(maxVals[i]);
-//   TeensySerial.print(" | ");
-//   TeensySerial.print(lightThresh[i]);
-//   TeensySerial.print(" | ");
-// }
-// TeensySerial.println();
-// calibrate();
+  // for (int i = 0; i < 30; i++)
+  // {
+  //   // TeensySerial.print(i);
+  //   // TeensySerial.print(" | ");
+  //   TeensySerial.print(lightVals[i]);
+  //   TeensySerial.print(" , ");
+  // }
+  // TeensySerial.println();
+  // processLightData();
+  // if (onLine)
+  // {
+  //   double lastTimeOut = millis();
+  //   if (lastLineAngle >= 0 && abs(lastLineAngle - lineAngle) >= 90)
+  //   {
+  //     lineAngle = lastLineAngle;
+  //     chordLength = 2 - chordLength;
+  //   }
+  //   int moveAngle = fmod(lineAngle + 180, 360);
+  //   lastLineAngle = lineAngle;
+  //   lastChordLength = chordLength;
+  // }
+  // put your main code here, to run repeatedly:
+  // updateSensors();
+
+  // for (int i = 0; i < 16; i++)
+  // {
+  //   TeensySerial.print(i);
+  //   TeensySerial.print(" | ");
+  //   TeensySerial.print(lightVals[i]);
+  //   TeensySerial.print(" | ");
+  // }
+  // TeensySerial.println();
+  // Print TH Values
+  // for (int i = 0; i < 30; i++)
+  // {
+  //   TeensySerial.print(i);
+  //   TeensySerial.print(" | ");
+  //   TeensySerial.print(minVals[i]);
+  //   TeensySerial.print(" | ");
+  //   TeensySerial.print(maxVals[i]);
+  //   TeensySerial.print(" | ");
+  //   TeensySerial.print(lightThresh[i]);
+  //   TeensySerial.print(" | ");
+  // }
+  // TeensySerial.println();
+  // calibrate();
 }
