@@ -153,21 +153,21 @@ void loop()
     calculateAngleStrength(6);
   }
   lastUp = micros();
-  Serial2.print("Angle: ");
-  Serial2.print(angle);
-  Serial2.print(" Strength: ");
-  Serial2.println(strength);
+  // Serial2.print("Angle: ");
+  // Serial2.print(angle);
+  // Serial2.print(" Strength: ");
+  // Serial2.println(strength);
 
   // Create a buffer to send the data over serial and the size of the buffer is the total combined size of the angle stregnth and sync byte in BYTES
-  // byte buf[9U];
+  byte buf[9U];
 
-  // // Set the first byte of the buffer to the sync byte
-  // buf[0] = SYNC_BYTE;
+  // Set the first byte of the buffer to the sync byte
+  buf[0] = SYNC_BYTE;
 
-  // // Copy the angle and strength into the buffer
-  // memcpy(buf + 1U, &angle, sizeof(angle));
-  // memcpy(buf + 1U + sizeof(angle), &strength, sizeof(strength));
+  // Copy the angle and strength into the buffer
+  memcpy(buf + 1U, &angle, sizeof(angle));
+  memcpy(buf + 1U + sizeof(angle), &strength, sizeof(strength));
 
-  // // Print the buffer to serial with printf
-  // Serial2.write(buf, sizeof(buf));
+  // Print the buffer to serial with printf
+  Serial2.write(buf, sizeof(buf));
 }

@@ -137,12 +137,11 @@ void loop()
         else
         {
           lineDetected[outSensors] = i;
-          onLine = true;
         }
       }
     }
   }
-
+  onLine = outSensors > 0;
   if (onLine)
   {
     for (int i = 1; i < outSensors; i++)
@@ -161,12 +160,14 @@ void loop()
     chordLength = angleDiff(clusterStart, clusterEnd) / 180;
     lineAngle = angleBetween(clusterStart, clusterEnd) <= 180 ? midAngleBetween(clusterStart, clusterEnd) : midAngleBetween(clusterEnd, clusterStart);
   }
-  for (int i = 0; i < outSensors; i++)
-  {
-    TeensySerial.print(lineDetected[i]);
-    TeensySerial.print(" , ");
-  }
+  // for (int i = 0; i < outSensors; i++)
+  // {
+  //   TeensySerial.print(lineDetected[i]);
+  //   TeensySerial.print(" , ");
+  // }
+
   outSensors = 0;
+
   if (onLine)
   {
     lastOutTime = millis();
@@ -179,46 +180,63 @@ void loop()
       chordLength = 2 - chordLength;
     }
   }
-  // else
-  // {
-  //   if (prevLine && lastChordLength > 1 &&
-  //       (millis() - lastOutTime < 100) && (millis() - lastInTime > 300))
-  //   {
-  //     // previously on line, now out of field
-  //     onLine = true;
-  //     chordLength = 2;
-  //     lineAngle = lastLineAngle;
-  //   }
-  // }
+  else
+  {
+    if (prevLine && lastChordLength > 1 &&
+        (millis() - lastOutTime < 100) && (millis() - lastInTime > 300))
+    {
+      // previously on line, now out of field
+      onLine = true;
+      chordLength = 2;
+      lineAngle = lastLineAngle;
+    }
+  }
 
-  // if (onLine)
-  // {
-  //   float moveAngle = fmod(lineAngle + 180, 360);
-  //   lastLineAngle = lineAngle;
-  //   lastChordLength = chordLength;
-  // }
-  // else
-  // {
-  //   lastInTime = millis();
-  //   if (millis() - lastOutTime > 1000)
-  //   {
-  //     // reset last line angle
-  //     lastLineAngle = 0;
-  //     lastChordLength = 0;
-  //   }
-  // }
-  // prevLine = onLine;
-  TeensySerial.print("Cluter Start: ");
-  TeensySerial.print(clusterStart);
-  TeensySerial.print(" , ");
-  TeensySerial.print("Cluter End: ");
-  TeensySerial.print(clusterEnd);
-  TeensySerial.print(" , ");
-  TeensySerial.print("Line Angle: ");
-  TeensySerial.print(lineAngle);
-  TeensySerial.print(" , ");
-  TeensySerial.print("Chord Length: ");
-  TeensySerial.println(chordLength);
+  if (onLine)
+  {
+    moveAngle = round(fmod(lineAngle + 180, 360));
+    // TeensySerial.print("move angle: ");
+    // TeensySerial.print(moveAngle);
+    // TeensySerial.print(" , ");
+    lastLineAngle = lineAngle;
+    lastChordLength = chordLength;
+  }
+  else
+  {
+    lastInTime = millis();
+    if (millis() - lastOutTime > 1000)
+    {
+      // reset last line angle
+      lastLineAngle = 0;
+      lastChordLength = 0;
+    }
+  }
+  prevLine = onLine;
 
-  largestDiff = 0;
+  // // Create a buffer to send the data over serial and the size of the buffer is the total combined size of the angle stregnth and sync byte in BYTES
+  byte buf[7U];
+
+  // Set the first byte of the buffer to the sync byte
+  buf[0] = SYNC_BYTE;
+
+  // Copy the angle and strength into the buffer
+  memcpy(buf + 1U, &onLine, sizeof(onLine));
+  memcpy(buf + 1U + sizeof(onLine), &moveAngle, sizeof(moveAngle));
+
+  // Print the buffer to serial with printf
+  Serial2.write(buf, sizeof(buf));
+
+  // TeensySerial.print("Cluter Start: ");
+  // TeensySerial.print(clusterStart);
+  // TeensySerial.print(" , ");
+  // TeensySerial.print("Cluter End: ");
+  // TeensySerial.print(clusterEnd);
+  // TeensySerial.print(" , ");
+  // TeensySerial.print("Line Angle: ");
+  // TeensySerial.print(lineAngle);
+  // TeensySerial.print(" , ");
+  // TeensySerial.print("Chord Length: ");
+  // TeensySerial.print(chordLength);
+  // TeensySerial.print("On Line: ");
+  // TeensySerial.println(onLine);
 }

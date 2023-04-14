@@ -6,6 +6,8 @@
 
 #define TeensySerial Serial2
 
+#define SYNC_BYTE 0b11010110
+
 // STM32 Pinouts
 #define mux1 PB0
 #define mux2 PA4
@@ -22,6 +24,7 @@
 
 // Initilalize Variables
 long lastOutTime, lastInTime;
+int moveAngle = 0;
 float vecX = 0;
 float vecY = 0;
 float closestAngle = 0;
