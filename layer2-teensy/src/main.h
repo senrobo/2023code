@@ -56,7 +56,7 @@ int correctionKD = 0;
 
 int movementStrengthAngleOld = 0;
 
-#define IMUKP 1
+#define IMUKP 2
 #define IMUKI 0.2
 #define IMUKD 20
 #define MATH_E 2.7182818284590452353602874713527

@@ -282,27 +282,47 @@ void setup()
 
 void loop()
 {
-  // calculateRobotAngle();
-  // if (abs(correction) > 5)
-  // {
-  //   movement.angle = 0;
-  //   movement.speed = 0;
-  //   movement.angularVelocity = correction;
-  //   drive();
-  // }
-  // else
-  // {
-  //   movement.angularVelocity = 0;
-  //   getIRData();
-  //   calculateOrbit();
-  //   drive();
-  // }
   getLightData();
-  DEBUG.print("on Line: ");
-  DEBUG.print(linedata.onLine);
-  DEBUG.print(" Angle: ");
-  DEBUG.println(linedata.moveAngle);
-  // getIRData();
+  if (linedata.onLine)
+  {
+    movement.angle = linedata.moveAngle;
+    movement.speed = 20;
+    movement.angularVelocity = 0;
+    drive();
+  }
+  calculateRobotAngle();
+  if (abs(correction) > 5)
+  {
+    movement.angle = 0;
+    movement.speed = 0;
+    movement.angularVelocity = correction;
+    drive();
+  }
+  else
+  {
+    movement.angularVelocity = 0;
+    getIRData();
+    if (balldata.strength != 400)
+    {
+      // move to ball
+      calculateOrbit();
+      drive();
+      if (analogRead(BALL_DETECT) > 400)
+      {
+        movement.angle = 0;
+        movement.speed = 50;
+        movement.angularVelocity = 0;
+        drive();
+      }
+    }
+    else
+    {
+      movement.angle = 0;
+      movement.speed = 0;
+      movement.angularVelocity = 0;
+      drive();
+    }
+  }
 }
 
 // drive();
