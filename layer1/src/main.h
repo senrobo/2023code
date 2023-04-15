@@ -49,36 +49,36 @@ int clusterStart = 0;
 int clusterEnd = 0;
 int lightThresh[30];
 int sciCenterThresh[30] = {
-    94,
-    71,
-    278,
-    291,
-    350,
-    406,
-    350,
-    221,
-    285,
-    331,
-    443,
+    453,
+    445,
+    433,
+    411,
+    431,
+    439,
+    439,
+    434,
+    444,
+    448,
+    448,
+    450,
+    445,
+    441,
+    444,
+    446,
+    465,
+    448,
+    452,
+    448,
+    445,
+    448,
     448,
     443,
-    439,
-    442,
     445,
-    475,
-    445,
-    450,
     446,
-    439,
     444,
+    441,
+    447,
     445,
-    439,
-    438,
-    428,
-    438,
-    435,
-    434,
-    392,
 };
 int fixedThreshFirstBot[30] = {
     455,
@@ -150,6 +150,18 @@ int muxChannelTwo[14][4] = {
     {1, 0, 0, 0}, // 1
     {0, 0, 0, 0}  // 0
 };
+
+int moveBack = 0;
+int moveForward = 0;
+int moveLeft = 0;
+int moveRight = 0;
+
+int largest = 0;
+
+int moveBackValues[8] = {1, 2, 3, 4, 29, 28, 27, 26};
+int moveForwardValues[8] = {14, 13, 12, 11, 16, 17, 18, 19};
+int moveLeftValues[8] = {5, 6, 7, 8, 9, 10, 11, 12};
+int moveRightValues[8] = {26, 25, 24, 23, 22, 21, 20, 19};
 
 float mod(float x, float y)
 {
