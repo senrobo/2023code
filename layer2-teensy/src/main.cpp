@@ -234,11 +234,11 @@ void calculateOrbit()
   double ballAngleDifference = -sign(balldata.angle - 180) * fmin(90, 0.4 * pow(MATH_E, 0.15 * (double)smallestAngleBetween(balldata.angle, 0)));
 
   // Multiply the addition by distance. The further the ball, the more the robot moves towards the ball. Also an exponential function //0.02,4.5
-  double distanceMultiplier = constrain(0.02 * balldata.strength * pow(MATH_E, 500 * balldata.strength), 0, 1);
+  double distanceMultiplier = constrain(500 * balldata.strength * pow(MATH_E, 1 * balldata.strength), 0, 1);
   double angleAddition = ballAngleDifference * distanceMultiplier;
 
   movement.angle = mod(balldata.angle + angleAddition, 360);
-  movement.speed = DRIVE_MIN_SPEED + (double)(DRIVE_MAX_SPEED - DRIVE_MIN_SPEED) * (1.0 - (double)abs(angleAddition) / 90.0);
+  movement.speed = DRIVE_STALL_SPEED + (double)(DRIVE_MAX_SPEED - DRIVE_STALL_SPEED) * (1.0 - (double)abs(angleAddition) / 90.0);
 }
 
 void setup()
@@ -304,15 +304,7 @@ void setup()
 
 void loop()
 {
-  // calculateRobotAngle();
-  // if (abs(correction) > 5)
-  // {
-  //   movement.angle = 0;
-  //   movement.speed = 0;
-  //   movement.angularVelocity = correction;
-  //   drive();
-  // }
-  // getLightData();
+
   // if (linedata.onLine)
   // {
   //   movement.angle = linedata.moveAngle;
@@ -321,18 +313,13 @@ void loop()
   //   drive();
   // }
   getIRData();
-  // DEBUG.print("Angle : ");
-  // DEBUG.print(balldata.angle);
-  // DEBUG.print(" Strength : ");
-  // DEBUG.println(balldata.strength);
-
-  // if (balldata.strength != 400)
-  // {
-  //   // move to ball
-  //   movement.angularVelocity = 0;
-  //   calculateOrbit();
-  //   drive();
-  // }
+  if (balldata.strength != 400)
+  {
+    // move to ball
+    movement.angularVelocity = 0;
+    calculateOrbit();
+    drive();
+  }
   // else
   // {
   //   // localise

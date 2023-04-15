@@ -99,57 +99,34 @@ sensor.skip_frames(time=1000)
 clock = time.clock()
 uart = UART(1, 2000000)
 
-ID = 'whitebot'
-#ID = 'blackbot'
 
-if ID == 'blackbot':
-    centreY = 146
-    centreX = 141
-    ROI = (0, 0, 298, 240)
+centreY = 146
+centreX = 141
+ROI = (0, 0, 298, 240)
 
-    # LAB thresholds
-    # lab field values
-    #red_thresh = [(35, 55, 20, 53, 15, 40)]
+# LAB thresholds
+# lab field values
+#red_thresh = [(35, 55, 20, 53, 15, 40)]
 
-    #red_thresh = [(43, 71, 41, 65, -9, 45)]
-    #blue_thresh = [(30, 74, -22, 14, -57, -30)]
-    #yellow_thresh = [(77, 100, -50, 127, 19, 61)]
+#red_thresh = [(43, 71, 41, 65, -9, 45)]
+#blue_thresh = [(30, 74, -22, 14, -57, -30)]
+#yellow_thresh = [(77, 100, -50, 127, 19, 61)]
 
 
 
-    # SCIENCE CENTRE VALS
+# SCIENCE CENTRE VALS
 
-    # PRAC FIELD
-    #red_thresh = [(43, 71, 41, 65, -9, 45)]
-    #blue_thresh = [(5, 29, -20, 29, -31, -3)]
-    #yellow_thresh = [(45, 100, 0, 40, 18, 127)]
+# PRAC FIELD
+#red_thresh = [(43, 71, 41, 65, -9, 45)]
+#blue_thresh = [(5, 29, -20, 29, -31, -3)]
+#yellow_thresh = [(51, 93, -18, 66, 23, 107)]
 
-    # REAL VALS
+# REAL VALS
+blue_thresh = [(23, 39, 31, 53, -82, -56)]
+yellow_thresh = [(44, 65, -41, 9, 8, 46)]
 
-    red_thresh = [(43, 71, 41, 65, -9, 45)]
-    blue_thresh = [(5, 29, -20, 29, -31, -3)]
-    yellow_thresh = [(51, 93, -18, 66, 23, 107)]
-else:
-    centreY = 144
-    centreX = 155
-    ROI = (0, 0, 297, 240)
-
-    # LAB thresholds
-    # lab field values.
-    #red_thresh = [(43, 71, 41, 65, -9, 45)]
-    #blue_thresh = [(30, 74, -22, 14, -57, -30)]
-    #yellow_thresh = [(77, 100, -50, 127, 19, 61)]
-
-
-    # SCIENCE CENTRE VALS
-    red_thresh = [(100, 100, 127, 127, 127, 127)]
-    blue_thresh = [(31, 54, 1, 17, -64, -36)]
-    yellow_thresh = [(56, 76, -6, 29, 0, 43)]
-
-    # PRACTICE FIELD
 
 dT = 0
-ballFound = False
 notFoundCount = 0
 
 
@@ -166,18 +143,6 @@ def distanceMapper(pixel):
            (0.0026433076) * pixel**3  +
            (-0.0000275141) * pixel**4 +
            (0.0000001031) * pixel**5 ) * polarity
-
-def distanceUnmapper(real):
-    # use polynomial regression to map centimetre distance back to pixel distance
-    polarity = real / abs(real) if real != 0 else 1
-    # use absolute value since polynomial equation is different for negative numbers
-    real = abs(real)
-    return (-4.92497614 +
-           (3.0761747478) * real +
-           (-0.0238111740) * real**2 +
-           (-0.0000109829) * real**3  +
-           (0.0000008785) * real**4 +
-           (-0.0000000027) * real**5 ) * polarity
 
 class obj:
     def __init__(self, x, y, w, h):
@@ -250,59 +215,8 @@ def find_objects(debug=False):
     global ballFound
     global notFoundCount
     predBall = None
-    img.draw_cross(centreX, centreY, color = (255, 0, 0))
-    ball = track_obj(red_thresh, 3, 3, debug = debug, stride=2)
     blue = track_obj(blue_thresh, 5, 10, color = (0, 0, 255), stride = 10,  debug = debug, merge = False, margin = 0)
     yellow = track_obj(yellow_thresh, 5, 10, color = (0, 255, 0), stride = 10, debug =  debug, merge = False, margin = 0)
-
-    if ballFound:
-        kf.F[0][2] = dT
-        kf.F[1][3] = dT
-
-        state = kf.predict()
-        predW = state[4][0]
-        predH = state[5][0]
-        predX = state[0][0]
-        predY = state[1][0]
-        predBall = obj(predX, predY, predW, predH)
-        predBall.process(mapDist = False)
-
-        if debug:
-            debugPredX = centreX + distanceUnmapper(predX)
-            debugPredY = centreY - distanceUnmapper(predY)
-
-
-            predRect = (int(debugPredX - predH / 2), int(debugPredY - predW / 2), int(predW), int(predH))
-            img.draw_rectangle(predRect, color = (0, 255, 255))
-            img.draw_cross(int(debugPredX), int(debugPredY), color = (0, 255, 255))
-
-
-        # ball not detected but was recently seen
-
-    if ball:
-        notFoundCount = 0
-        # map pixel dist to real dist so kalman filter can track ball more accurately
-        #print(ball.x, ball.y)
-        ball.centralise()
-        ball.x = distanceMapper(ball.x)
-        ball.y = distanceMapper(ball.y)
-
-        z = np.array([[ball.x], [ball.y], [ball.w], [ball.h]], dtype=np.float)
-        ball.process(mapDist = False)
-        if not ballFound:
-            # first detection!
-            kf.P = np.eye(kf.F.shape[1])
-            kf.x = np.array([z[0],z[1], [0], [0], z[2], z[3]], dtype=np.float)
-
-            ballFound = True
-        else:
-            kf.update(z)
-    else:
-        # ball not detected
-        notFoundCount += 1
-        if notFoundCount >= 100:
-            ballFound = False
-
 
 
     # create dummy objects if the object is not detected
@@ -312,7 +226,7 @@ def find_objects(debug=False):
         #print(f"Yellow pixel dist: {yellow.x} ")
         if debug:
             #print(f"Yellow Goal: Angle: {yellow.angle} Distance: {yellow.dist} Pixel Distance: {yellow.unmappedDist}")
-            yellow.goalDist = distanceMapper(abs(yellow.dist * math.sin(yellow.angle)))
+            yellow.goalDist = abs(yellow.dist * math.sin(yellow.angle)) * 4
             print(f"Yellow Goal Relative Distance {yellow.goalDist} mm")
     else:
         yellow = obj(0, 0, 0, 0)
@@ -324,29 +238,17 @@ def find_objects(debug=False):
 
         if debug:
             #print(f"Blue Goal: Angle: {blue.angle} Distance: {blue.dist} Pixel Distance: {blue.unmappedDist}")
-            blue.goalDist = distanceMapper(abs(blue.dist * math.sin(360 - blue.angle)))
+            blue.goalDist = abs(blue.dist * math.sin(360 - blue.angle)) * 4
             #print(f"Blue Goal Relative Distance: {blue.goalDist} mm")
     else:
         blue = obj(0, 0, 0, 0)
         #if debug:
             #print(f"Blue Goal not detected!")
 
-    if ball:
-        if debug:
-            #print(f"Ball: Angle: {ball.angle} Distance: {ball.dist}")
-            pass
-    else:
-        ball = obj(0, 0, 0, 0)
-
-    if predBall:
-        if debug:
-            #print(f"Predicted Ball: Angle: {predBall.angle} Distance: {predBall.dist}")
-            pass
-    else:
-        predBall = obj(0, 0, 0, 0)
 
 
-    return [ball.angle, ball.dist, predBall.angle, predBall.dist, blue.angle, blue.dist, yellow.angle, yellow.dist]
+
+    return [blue.angle, blue.dist, yellow.angle, yellow.dist]
 
 def send(data):
     sendData = [42]

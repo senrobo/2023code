@@ -49,7 +49,7 @@ int correctionKD = 0;
 
 #define DRIVE_STALL_SPEED (int16_t)20
 #define DRIVE_MIN_SPEED (int16_t)40
-#define DRIVE_MAX_SPEED (int16_t)80
+#define DRIVE_MAX_SPEED (int16_t)100
 
 #define BALL_MOVEMENT_A 1e-4
 #define BALL_MOVEMENT_B 10.0F
