@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <movingAvg.h>
 
 #define ARRAYSHIFTDOWN(a, lower, upper)              \
     {                                                \
@@ -18,6 +19,9 @@
         }                                            \
     }
 
+
+int avgStrength = 0;
+int avgAngle = 0;
 bool ball = false;
 int angle = 0;
 int strength = 0;

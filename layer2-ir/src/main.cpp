@@ -1,5 +1,7 @@
 #include "main.h"
 
+movingAvg irStrength(25); // define the moving average object
+
 double radiansToDegrees(double radians)
 {
   return radians * 180 / PI;
@@ -13,49 +15,6 @@ double degreesToRadians(double degrees)
 int mod(int x, int m)
 {
   return (x % m + m) % m;
-}
-
-void setup()
-{
-  Serial2.begin(115200);
-  pinMode(PB15, OUTPUT);
-  digitalWrite(PB15, HIGH);
-
-  pinMode(PA5, INPUT);
-  pinMode(PA4, INPUT);
-  pinMode(PA1, INPUT);
-  pinMode(PA0, INPUT);
-  pinMode(PC15, INPUT);
-  pinMode(PC14, INPUT);
-  pinMode(PB9, INPUT);
-  pinMode(PB8, INPUT);
-  pinMode(PB7, INPUT);
-  pinMode(PB6, INPUT);
-  pinMode(PB5, INPUT);
-  pinMode(PB4, INPUT);
-  pinMode(PB3, INPUT);
-  pinMode(PA15, INPUT);
-  pinMode(PB14, INPUT);
-  pinMode(PB13, INPUT);
-  pinMode(PB12, INPUT);
-  pinMode(PB11, INPUT);
-  pinMode(PB10, INPUT);
-  pinMode(PB2, INPUT);
-  pinMode(PB1, INPUT);
-  pinMode(PB0, INPUT);
-  pinMode(PA7, INPUT);
-  pinMode(PA6, INPUT);
-
-  double temp_angle;
-
-  for (int i = 0; i < 24; i++)
-  {
-    temp_angle = degreesToRadians(i * 15);
-    scaledCos[i] = cos(temp_angle);
-    scaledSin[i] = sin(temp_angle);
-  }
-
-  unsigned long lastUp = micros();
 }
 
 void irUpdateOnce()
@@ -141,9 +100,52 @@ void calculateAngleStrength(int n)
     angle = mod(radiansToDegrees(atan2(y, x)), 360);
   }
   strength = sqrt(x * x + y * y);
-  strength = constrain(((double)strength - (double)BALL_FAR_STRENGTH) / ((double)BALL_CLOSE_STRENGTH - BALL_FAR_STRENGTH), 0, 1);
+  avgStrength = irStrength.reading(strength);
 }
 
+void setup()
+{
+  Serial2.begin(115200);
+  irStrength.begin();
+  pinMode(PB15, OUTPUT);
+  digitalWrite(PB15, HIGH);
+
+  pinMode(PA5, INPUT);
+  pinMode(PA4, INPUT);
+  pinMode(PA1, INPUT);
+  pinMode(PA0, INPUT);
+  pinMode(PC15, INPUT);
+  pinMode(PC14, INPUT);
+  pinMode(PB9, INPUT);
+  pinMode(PB8, INPUT);
+  pinMode(PB7, INPUT);
+  pinMode(PB6, INPUT);
+  pinMode(PB5, INPUT);
+  pinMode(PB4, INPUT);
+  pinMode(PB3, INPUT);
+  pinMode(PA15, INPUT);
+  pinMode(PB14, INPUT);
+  pinMode(PB13, INPUT);
+  pinMode(PB12, INPUT);
+  pinMode(PB11, INPUT);
+  pinMode(PB10, INPUT);
+  pinMode(PB2, INPUT);
+  pinMode(PB1, INPUT);
+  pinMode(PB0, INPUT);
+  pinMode(PA7, INPUT);
+  pinMode(PA6, INPUT);
+
+  double temp_angle;
+
+  for (int i = 0; i < 24; i++)
+  {
+    temp_angle = degreesToRadians(i * 15);
+    scaledCos[i] = cos(temp_angle);
+    scaledSin[i] = sin(temp_angle);
+  }
+
+  unsigned long lastUp = micros();
+}
 void loop()
 {
   irUpdateOnce();
@@ -155,9 +157,9 @@ void loop()
   }
   lastUp = micros();
   // Serial2.print("Angle: ");
-  // Serial2.print(angle);
-  // Serial2.print(" Strength: ");
-  // Serial2.println(strength);
+  // Serial2.print(avgAngle);
+  // Serial2.print("Strength: ");
+  // Serial2.println(avgStrength); // 10cm > 200
 
   // // Create a buffer to send the data over serial and the size of the buffer is the total combined size of the angle stregnth and sync byte in BYTES
   byte buf[9U];
@@ -166,8 +168,8 @@ void loop()
   buf[0] = SYNC_BYTE;
 
   // Copy the angle and strength into the buffer
-  memcpy(buf + 1U, &angle, sizeof(angle));
-  memcpy(buf + 1U + sizeof(angle), &strength, sizeof(strength));
+  memcpy(buf + 1U, &angle, sizeof(avgAngle));
+  memcpy(buf + 1U + sizeof(avgAngle), &avgStrength, sizeof(avgStrength));
 
   // Print the buffer to serial with printf
   Serial2.write(buf, sizeof(buf));

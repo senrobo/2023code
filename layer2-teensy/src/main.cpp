@@ -160,20 +160,18 @@ void getIRData()
       memcpy(&balldata.angle, buf, 4U);
       memcpy(&balldata.strength, buf + 4U, 4U);
 
-      //     //     // // Print the buffer to serial with printf
-      //     //     // for (int i = 0; i < 8; ++i)
-      //     //     //   DEBUG.printf("%02x", buf[i]);
-      //     //     // DEBUG.print("\n ");
-      //     //   }
-      //     // }
+      //     // // Print the buffer to serial with printf
+      //     // for (int i = 0; i < 8; ++i)
+      //     //   DEBUG.printf("%02x", buf[i]);
+      //     // DEBUG.print("\n ");
       //   }
-      // }
-      // while (IR_SERIAL.available() > 0)
-      // {
-      //   DEBUG.print(char(IR_SERIAL.read()));
       // }
     }
   }
+  // while (IR_SERIAL.available() > 0)
+  // {
+  //   DEBUG.print(char(IR_SERIAL.read()));
+  // }
 }
 
 void getLightData()
@@ -306,32 +304,39 @@ void setup()
 
 void loop()
 {
-  calculateRobotAngle();
-  if (abs(correction) > 5)
-  {
-    movement.angle = 0;
-    movement.speed = 0;
-    movement.angularVelocity = correction;
-    drive();
-  }
-  getLightData();
-  if (linedata.onLine)
-  {
-    movement.angle = linedata.moveAngle;
-    movement.speed = 50;
-    movement.angularVelocity = 0;
-    drive();
-  }
+  // calculateRobotAngle();
+  // if (abs(correction) > 5)
+  // {
+  //   movement.angle = 0;
+  //   movement.speed = 0;
+  //   movement.angularVelocity = correction;
+  //   drive();
+  // }
+  // getLightData();
+  // if (linedata.onLine)
+  // {
+  //   movement.angle = linedata.moveAngle;
+  //   movement.speed = 50;
+  //   movement.angularVelocity = 0;
+  //   drive();
+  // }
   getIRData();
-  if (balldata.strength != 400)
-  {
-    // move to ball
-    movement.angularVelocity = 0;
-    calculateOrbit();
-    drive();
-  }else{
-    //localise
-  }
+  // DEBUG.print("Angle : ");
+  // DEBUG.print(balldata.angle);
+  // DEBUG.print(" Strength : ");
+  // DEBUG.println(balldata.strength);
+
+  // if (balldata.strength != 400)
+  // {
+  //   // move to ball
+  //   movement.angularVelocity = 0;
+  //   calculateOrbit();
+  //   drive();
+  // }
+  // else
+  // {
+  //   // localise
+  // }
   //     // if (analogRead(BALL_DETECT) > 400)
   //     // {
   //     //   movement.angle = 0;
