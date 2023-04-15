@@ -23,6 +23,12 @@ struct ballData
   int strength = 0;
 } balldata;
 
+struct lineData
+{
+  int moveAngle = 0;
+  bool onLine = false;
+} linedata;
+
 // IMU Stuff
 
 void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
@@ -141,37 +147,53 @@ void drive()
 
 void getIRData()
 {
-  // // Loop through the IR_SERIAL buffer to find the sync byte
-  // while (IR_SERIAL.available() >= 9U)
-  // {
-  //   if (IR_SERIAL.read() == SYNC_BYTE)
-  //   {
-  //     // Subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
-  //     byte buf[8U];
-  //     IR_SERIAL.readBytes(buf, 8U);
-
-  //     // Copy the last 8 buffer bytes into the ballAngle and ballStrength variables
-  //     memcpy(&balldata.angle, buf, 4U);
-  //     memcpy(&balldata.strength, buf + 4U, 4U);
-
-  //     // // Print the buffer to serial with printf
-  //     // for (int i = 0; i < 8; ++i)
-  //     //   DEBUG.printf("%02x", buf[i]);
-  //     // DEBUG.print("\n ");
-  //   }
-  // }
-  while (IR_SERIAL.available() > 0)
+  // Loop through the IR_SERIAL buffer to find the sync byte
+  while (IR_SERIAL.available() >= 9U)
   {
-    DEBUG.print(char(IR_SERIAL.read()));
+    if (IR_SERIAL.read() == SYNC_BYTE)
+    {
+      // Subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
+      byte buf[8U];
+      IR_SERIAL.readBytes(buf, 8U);
+
+      // Copy the last 8 buffer bytes into the ballAngle and ballStrength variables
+      memcpy(&balldata.angle, buf, 4U);
+      memcpy(&balldata.strength, buf + 4U, 4U);
+
+      //     // // Print the buffer to serial with printf
+      //     // for (int i = 0; i < 8; ++i)
+      //     //   DEBUG.printf("%02x", buf[i]);
+      //     // DEBUG.print("\n ");
+      //   }
+      // }
+      // while (IR_SERIAL.available() > 0)
+      // {
+      //   DEBUG.print(char(IR_SERIAL.read()));
+      // }
+    }
   }
 }
 
 void getLightData()
 {
-  while (LAYER1_SERIAL.available() > 0)
+  // Loop through the IR_SERIAL buffer to find the sync byte
+  while (LAYER1_SERIAL.available() >= 7U)
   {
-    DEBUG.print(char(LAYER1_SERIAL.read()));
+    if (LAYER1_SERIAL.read() == SYNC_BYTE)
+    {
+      // Subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
+      byte buf[6U];
+      LAYER1_SERIAL.readBytes(buf, 6U);
+
+      // Copy the last 6 buffer bytes into the onLine status which is a bool and moveAngle which is an int
+      memcpy(&linedata.onLine, buf, 1U);
+      memcpy(&linedata.moveAngle, buf + 1U, 4U);
+    }
   }
+  // while (LAYER1_SERIAL.available() > 0)
+  // {
+  //   DEBUG.print(char(LAYER1_SERIAL.read()));
+  // }
 }
 
 void stop()
@@ -260,23 +282,47 @@ void setup()
 
 void loop()
 {
-  // calculateRobotAngle();
-  // if (abs(correction) > 5)
-  // {
-  //   movement.angle = 0;
-  //   movement.speed = 0;
-  //   movement.angularVelocity = correction;
-  //   drive();
-  // }
-  // else
-  // {
-  //   movement.angularVelocity = 0;
-  //   getIRData();
-  //   calculateOrbit();
-  //   drive();
-  // }
-  // getLightData();
-  getIRData();
+  getLightData();
+  if (linedata.onLine)
+  {
+    movement.angle = linedata.moveAngle;
+    movement.speed = 20;
+    movement.angularVelocity = 0;
+    drive();
+  }
+  calculateRobotAngle();
+  if (abs(correction) > 5)
+  {
+    movement.angle = 0;
+    movement.speed = 0;
+    movement.angularVelocity = correction;
+    drive();
+  }
+  else
+  {
+    movement.angularVelocity = 0;
+    getIRData();
+    if (balldata.strength != 400)
+    {
+      // move to ball
+      calculateOrbit();
+      drive();
+      if (analogRead(BALL_DETECT) > 400)
+      {
+        movement.angle = 0;
+        movement.speed = 50;
+        movement.angularVelocity = 0;
+        drive();
+      }
+    }
+    else
+    {
+      movement.angle = 0;
+      movement.speed = 0;
+      movement.angularVelocity = 0;
+      drive();
+    }
+  }
 }
 
 // drive();

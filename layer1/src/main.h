@@ -6,6 +6,8 @@
 
 #define TeensySerial Serial2
 
+#define SYNC_BYTE 0b11010110
+
 // STM32 Pinouts
 #define mux1 PB0
 #define mux2 PA4
@@ -21,6 +23,11 @@
 #define led PC13
 
 // Initilalize Variables
+long lastOutTime, lastInTime;
+int moveAngle = 0;
+float vecX = 0;
+float vecY = 0;
+float closestAngle = 0;
 float lineAngle = 0;
 float lineTrackAngle;
 float lastLineAngle = 0;
@@ -28,6 +35,8 @@ float initialLineAngle = 0;
 float chordLength = 0;
 float lastChordLength = 0;
 bool onLine = false;
+bool previouslyOnLine = onLine;
+bool prevLine;
 int lineDetected[30];
 int outSensors = 0;
 int lightVals[30];
@@ -35,82 +44,82 @@ int maxVals[30];
 int minVals[30];
 long readTimer = 0;
 int lightCnt = 0;
-int ldrAngle = 12;
 int largestDiff = 0;
 int clusterStart = 0;
 int clusterEnd = 0;
 int lightThresh[30];
 int sciCenterThresh[30] = {
-    455,
-    437,
-    424,
-    434,
-    430,
-    383,
-    432,
-    444,
-    447,
+    94,
+    71,
+    278,
+    291,
+    350,
+    406,
+    350,
+    221,
+    285,
+    331,
+    443,
     448,
-    445,
-    441,
-    441,
-    445,
-    432,
-    395,
-    452,
-    446,
-    450,
-    446,
-    440,
-    446,
-    446,
+    443,
+    439,
     442,
     445,
+    475,
+    445,
+    450,
     446,
+    439,
     444,
+    445,
+    439,
     438,
-    446,
-    443,
+    428,
+    438,
+    435,
+    434,
+    392,
 };
 int fixedThreshFirstBot[30] = {
     455,
     437,
-    340,
-    429,
-    393,
-    358,
-    430,
-    441,
-    444,
-    447,
-    443,
-    429,
-    398,
-    440,
-    440,
-    434,
-    432,
-    376,
-    446,
-    440,
-    390,
-    427,
-    445,
-    434,
-    439,
-    439,
-    438,
-    407,
-    441,
+    349,
+    312,
+    347,
+    386,
+    363,
+    348,
+    391,
+    360,
+    436,
     435,
+    429,
+    408,
+    431,
+    437,
+    489,
+    433,
+    444,
+    443,
+    409,
+    434,
+    443,
+    432,
+    433,
+    441,
+    332,
+    422,
+    439,
+    437,
 };
 
-int muxChannel[14][4] = {
+int muxChannel[16][4] = {
     // Flipped it around cos i was dumb
-    // Ignore front 2 sensors cos values
-    {1, 0, 1, 1}, // 13
-    {0, 0, 1, 1}, // 12
-    {1, 1, 0, 1}, // 11
+    {1, 1, 1, 1},
+    {0, 1, 1, 1},
+    {1, 0, 1, 1},
+    {0, 0, 1, 1},
+    {1, 1, 0, 1},
     {0, 1, 0, 1}, // 10
     {1, 0, 0, 1}, // 9
     {0, 0, 0, 1}, // 8
@@ -142,8 +151,11 @@ int muxChannelTwo[14][4] = {
     {0, 0, 0, 0}  // 0
 };
 
-float mod(float x, float y);
-
+float mod(float x, float y)
+{
+    x = fmod(x, y);
+    return x < 0 ? x + y : x;
+}
 float angleBetween(float x, float y) { return mod((y - x), 360); }
 
 float midAngleBetween(float x, float y)
@@ -156,5 +168,4 @@ float angleDiff(float x, float y)
     float diff = angleBetween(x, y);
     return fmin(diff, 360 - diff);
 }
-
 #endif
