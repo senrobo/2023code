@@ -140,7 +140,7 @@ void calculateAngleStrength(int n)
   {
     angle = mod(radiansToDegrees(atan2(y, x)), 360);
   }
-  strength = sqrt(x * x + y * y);
+  strength = sortedValues[0];
 }
 
 void loop()
