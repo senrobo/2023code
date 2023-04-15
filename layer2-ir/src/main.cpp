@@ -140,7 +140,8 @@ void calculateAngleStrength(int n)
   {
     angle = mod(radiansToDegrees(atan2(y, x)), 360);
   }
-  strength = sortedValues[0];
+  strength = sqrt(x * x + y * y);
+  strength = constrain(((double)strength - (double)BALL_FAR_STRENGTH) / ((double)BALL_CLOSE_STRENGTH - BALL_FAR_STRENGTH), 0, 1);
 }
 
 void loop()
@@ -158,7 +159,7 @@ void loop()
   // Serial2.print(" Strength: ");
   // Serial2.println(strength);
 
-  // Create a buffer to send the data over serial and the size of the buffer is the total combined size of the angle stregnth and sync byte in BYTES
+  // // Create a buffer to send the data over serial and the size of the buffer is the total combined size of the angle stregnth and sync byte in BYTES
   byte buf[9U];
 
   // Set the first byte of the buffer to the sync byte

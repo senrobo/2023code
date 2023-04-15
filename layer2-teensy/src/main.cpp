@@ -17,13 +17,13 @@ struct Movement
   int16_t angularVelocity = 0; // ~±140 to ~±1024
 } movement;
 
-struct ballData
+struct balldata
 {
   int angle = 0;
   int strength = 0;
 } balldata;
 
-struct lineData
+struct linedata
 {
   int moveAngle = 0;
   bool onLine = false;
@@ -160,10 +160,12 @@ void getIRData()
       memcpy(&balldata.angle, buf, 4U);
       memcpy(&balldata.strength, buf + 4U, 4U);
 
-      //     // // Print the buffer to serial with printf
-      //     // for (int i = 0; i < 8; ++i)
-      //     //   DEBUG.printf("%02x", buf[i]);
-      //     // DEBUG.print("\n ");
+      //     //     // // Print the buffer to serial with printf
+      //     //     // for (int i = 0; i < 8; ++i)
+      //     //     //   DEBUG.printf("%02x", buf[i]);
+      //     //     // DEBUG.print("\n ");
+      //     //   }
+      //     // }
       //   }
       // }
       // while (IR_SERIAL.available() > 0)
@@ -196,6 +198,27 @@ void getLightData()
   // }
 }
 
+void getCameraData()
+{
+  // while (CAMERA_SERIAL.available() >= 25)
+  // {
+  //   if (LAYER1_SERIAL.read() == SYNC_BYTE)
+  //   {
+  //     // Subtract the buffer by -1 to remove the SYNC_BYTE before reading the rest of the buffer
+  //     byte buf[24U];
+  //     LAYER1_SERIAL.readBytes(buf, 6U);
+
+  //     // Copy the last 6 buffer bytes into the onLine status which is a bool and moveAngle which is an int
+  //     memcpy(&linedata.onLine, buf, 1U);
+  //     memcpy(&linedata.moveAngle, buf + 1U, 4U);
+  //   }
+  // }
+  // while (CAMERA_SERIAL.available() > 0)
+  // {
+  //   DEBUG.print(char(CAMERA_SERIAL.read()));
+  // }
+}
+
 void stop()
 {
   analogWrite(FL_PWM, 0);
@@ -209,10 +232,11 @@ void calculateOrbit()
   // Orbit based on ball angle and strength
 
   // Add on an angle to the ball angle depending on the ball's angle. Exponential function 0.15
+
   double ballAngleDifference = -sign(balldata.angle - 180) * fmin(90, 0.4 * pow(MATH_E, 0.15 * (double)smallestAngleBetween(balldata.angle, 0)));
 
   // Multiply the addition by distance. The further the ball, the more the robot moves towards the ball. Also an exponential function //0.02,4.5
-  double distanceMultiplier = constrain(1 * ballStrength * pow(MATH_E, 500 * ballStrength), 0, 1);
+  double distanceMultiplier = constrain(0.02 * balldata.strength * pow(MATH_E, 500 * balldata.strength), 0, 1);
   double angleAddition = ballAngleDifference * distanceMultiplier;
 
   movement.angle = mod(balldata.angle + angleAddition, 360);
@@ -277,19 +301,11 @@ void setup()
 
   // Built in LED
   pinMode(BUILTIN_LED, OUTPUT);
-  digitalWrite(BUILTIN_LED, HIGH);
+  digitalWrite(BUILTIN_LED, LOW);
 }
 
 void loop()
 {
-  getLightData();
-  if (linedata.onLine)
-  {
-    movement.angle = linedata.moveAngle;
-    movement.speed = 20;
-    movement.angularVelocity = 0;
-    drive();
-  }
   calculateRobotAngle();
   if (abs(correction) > 5)
   {
@@ -298,32 +314,56 @@ void loop()
     movement.angularVelocity = correction;
     drive();
   }
-  else
+  getLightData();
+  if (linedata.onLine)
   {
+    movement.angle = linedata.moveAngle;
+    movement.speed = 50;
     movement.angularVelocity = 0;
-    getIRData();
-    if (balldata.strength != 400)
-    {
-      // move to ball
-      calculateOrbit();
-      drive();
-      if (analogRead(BALL_DETECT) > 400)
-      {
-        movement.angle = 0;
-        movement.speed = 50;
-        movement.angularVelocity = 0;
-        drive();
-      }
-    }
-    else
-    {
-      movement.angle = 0;
-      movement.speed = 0;
-      movement.angularVelocity = 0;
-      drive();
-    }
+    drive();
   }
+  getIRData();
+  if (balldata.strength != 400)
+  {
+    // move to ball
+    movement.angularVelocity = 0;
+    calculateOrbit();
+    drive();
+  }else{
+    //localise
+  }
+  //     // if (analogRead(BALL_DETECT) > 400)
+  //     // {
+  //     //   movement.angle = 0;
+  //     //   movement.speed = 50;
+  //     //   movement.angularVelocity = 0;
+  //     //   drive();
+  //     // }
+  //   }
+  // else
+  // {
+  //   movement.angle = 0;
+  //   movement.speed = 0;
+  //   movement.angularVelocity = 0;
+  //   drive();
+  // }
 }
+
+// }
+
+// DEBUG.println(balldata.strength);
+// DEBUG.print(linedata.onLine);
+// DEBUG.print(" ");
+// if (linedata.onLine)
+// {
+//   movement.angle = linedata.moveAngle;
+//   movement.speed = 40;
+//   movement.angularVelocity = 0;
+//   drive();
+// }
+// else
+// {
+// }
 
 // drive();
 // getLightData();

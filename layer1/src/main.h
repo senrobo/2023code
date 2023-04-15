@@ -28,8 +28,7 @@ int moveAngle = 0;
 float vecX = 0;
 float vecY = 0;
 float closestAngle = 0;
-float lineAngle = 0;
-float lineTrackAngle;
+int lineAngle = 0;
 float lastLineAngle = 0;
 float initialLineAngle = 0;
 float chordLength = 0;
@@ -81,36 +80,36 @@ int sciCenterThresh[30] = {
     445,
 };
 int fixedThreshFirstBot[30] = {
-    455,
+    459,
+    440,
+    326,
+    275,
+    318,
+    414,
+    398,
+    400,
+    433,
+    435,
+    443,
+    446,
+    441,
+    359,
+    417,
+    438,
+    442,
+    430,
     437,
-    349,
-    312,
-    347,
-    386,
-    363,
-    348,
-    391,
-    360,
-    436,
+    441,
+    372,
+    427,
+    442,
+    404,
+    439,
+    439,
     435,
     429,
-    408,
-    431,
-    437,
-    489,
-    433,
-    444,
-    443,
-    409,
+    440,
     434,
-    443,
-    432,
-    433,
-    441,
-    332,
-    422,
-    439,
-    437,
 };
 
 int muxChannel[16][4] = {
@@ -163,19 +162,22 @@ int moveForwardValues[8] = {14, 13, 12, 11, 16, 17, 18, 19};
 int moveLeftValues[8] = {5, 6, 7, 8, 9, 10, 11, 12};
 int moveRightValues[8] = {26, 25, 24, 23, 22, 21, 20, 19};
 
-float mod(float x, float y)
+int mod(int x, int y)
 {
     x = fmod(x, y);
     return x < 0 ? x + y : x;
 }
-float angleBetween(float x, float y) { return mod((y - x), 360); }
-
-float midAngleBetween(float x, float y)
+int angleBetween(int x, int y)
 {
-    return mod(x + angleBetween(x, y) / 2.0, 360);
+    return mod((y - x), 360);
 }
 
-float angleDiff(float x, float y)
+int midAngleBetween(int x, int y)
+{
+    return mod(x + angleBetween(x, y) / 2, 360);
+}
+
+int angleDiff(int x, int y)
 {
     float diff = angleBetween(x, y);
     return fmin(diff, 360 - diff);
