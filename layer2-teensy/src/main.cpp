@@ -227,18 +227,11 @@ void stop()
 
 void calculateOrbit()
 {
-  // Orbit based on ball angle and strength
-
-  // Add on an angle to the ball angle depending on the ball's angle. Exponential function 0.15
-
-  double ballAngleDifference = -sign(balldata.angle - 180) * fmin(90, 0.4 * pow(MATH_E, 0.15 * (double)smallestAngleBetween(balldata.angle, 0)));
-
-  // Multiply the addition by distance. The further the ball, the more the robot moves towards the ball. Also an exponential function //0.02,4.5
-  double distanceMultiplier = constrain(500 * balldata.strength * pow(MATH_E, 1 * balldata.strength), 0, 1);
-  double angleAddition = ballAngleDifference * distanceMultiplier;
-
-  movement.angle = mod(balldata.angle + angleAddition, 360);
-  movement.speed = DRIVE_STALL_SPEED + (double)(DRIVE_MAX_SPEED - DRIVE_STALL_SPEED) * (1.0 - (double)abs(angleAddition) / 90.0);
+  float ballOffset, ballMult;
+  balldata.angle <= 180 ? ballOffset = fmin(balldata.angle * 1.6, 90) : ballOffset = max((balldata.angle - 360) * 1.6, -90);
+  // float factor = 1 - ((balldata.strength) / 20) / 27;
+  ballMult = 1;
+  robotAngle = balldata.angle + ballOffset * ballMult;
 }
 
 void setup()
@@ -316,8 +309,10 @@ void loop()
   if (balldata.strength != 400)
   {
     // move to ball
-    movement.angularVelocity = 0;
     calculateOrbit();
+    movement.angularVelocity = 0;
+    movement.angle = robotAngle;
+    movement.speed = 50;
     drive();
   }
   // else
