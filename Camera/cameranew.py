@@ -3,6 +3,7 @@ from pyb import UART, LED
 
 import sensor, image, time, struct
 from math import *
+import math
 import ulab
 
 from ulab import numpy as np
@@ -310,7 +311,9 @@ def find_objects(debug=False):
         yellow.process()
         #print(f"Yellow pixel dist: {yellow.x} ")
         if debug:
-            print(f"Yellow Goal: Angle: {yellow.angle} Distance: {yellow.dist} Pixel Distance: {yellow.unmappedDist}")
+            #print(f"Yellow Goal: Angle: {yellow.angle} Distance: {yellow.dist} Pixel Distance: {yellow.unmappedDist}")
+            yellow.goalDist = distanceMapper(abs(yellow.dist * math.sin(yellow.angle)))
+            print(f"Yellow Goal Relative Distance {yellow.goalDist} mm")
     else:
         yellow = obj(0, 0, 0, 0)
 
@@ -320,7 +323,9 @@ def find_objects(debug=False):
         #print(f"blue pixel dist: {blue.y} ")
 
         if debug:
-            print(f"Blue Goal: Angle: {blue.angle} Distance: {blue.dist} Pixel Distance: {blue.unmappedDist}")
+            #print(f"Blue Goal: Angle: {blue.angle} Distance: {blue.dist} Pixel Distance: {blue.unmappedDist}")
+            blue.goalDist = distanceMapper(abs(blue.dist * math.sin(360 - blue.angle)))
+            #print(f"Blue Goal Relative Distance: {blue.goalDist} mm")
     else:
         blue = obj(0, 0, 0, 0)
         #if debug:
@@ -370,4 +375,6 @@ while(True):
     data = find_objects(debug=debug)
 
     send(data)
+
+
     #print("FPS:", clock.fps())
